@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hpet-backend
+  datasource:
+    url: jdbc:h2:mem:hpet;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  # 데모용 시크릿입니다. 실제 배포 시 반드시 환경변수로 교체하세요.
+  secret: change-this-secret-key-for-hackathon-demo-only-please-1234567890
+  access-token-expiration-ms: 3600000        # 1시간
+  refresh-token-expiration-ms: 1209600000    # 14일
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{requestId}] %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
