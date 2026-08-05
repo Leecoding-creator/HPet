@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HPet - 게임으로 만드는 건강 습관</title>
+  
+  <!-- Google Fonts: Modern & Pixel Retro Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 모바일 기기 케이스 프레임 -->
+  <div class="mobile-frame">
+    <!-- 다마고치 상단 센서/스피커 핀 -->
+    <div class="frame-top-bar">
+      <div class="speaker-hole"></div>
+      <div class="speaker-hole"></div>
+      <div class="speaker-hole"></div>
+      <div class="camera-lens"></div>
+    </div>
+
+    <!-- 앱 메인 스크린 컨테이너 -->
+    <main id="app" class="screen-container">
+      
+      <!-- 헤더 (앱 공통 유저/게이지 요약 - 로그인 후 표시) -->
+      <header id="main-header" class="app-header hidden">
+        <div class="user-info">
+          <div class="user-avatar" id="header-avatar">
+            <i class="fa-solid fa-cat"></i>
+          </div>
+          <div class="user-meta">
+            <span class="user-name" id="header-username">김하늘님</span>
+            <span class="streak-badge"><i class="fa-solid fa-fire"></i> <span id="header-streak">3</span>일째 복용 중</span>
+          </div>
+        </div>
+        <button id="btn-settings" class="icon-btn" aria-label="설정">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </header>
+
+      <!-- VIEW 1: 온보딩 / 회원가입 / 로그인 — Pill & Pose 스타일 -->
+      <section id="view-auth" class="view-section active" style="padding-top: 40px;">
+        
+        <!-- 로그인 컨테이너 -->
+        <div id="login-container" class="auth-container active">
+          <div class="logo-box" style="text-align: left; margin-bottom: 24px;">
+            <button class="retro-back-btn" aria-label="뒤로가기">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="logo-title" style="font-size: 24px; margin-top: 16px;">다시 만나서<br>반가워요 🐢</h1>
+            <p class="logo-tagline">로그인하고 오늘의 포션을 챙겨보세요.</p>
+          </div>
+
+          <form id="form-login" class="auth-form">
+            <label class="form-label">이메일</label>
+            <div class="input-group">
+              <input type="email" id="login-email" placeholder="example@email.com" value="sky@hpet.io" required>
+            </div>
+            
+            <label class="form-label">비밀번호</label>
+            <div class="input-group">
+              <input type="password" id="login-password" placeholder="비밀번호 입력" value="••••••••" required>
+              <button type="button" class="password-toggle" aria-label="비밀번호 표시">
+                <i class="fa-solid fa-eye-slash"></i>
+              </button>
+            </div>
+
+            <div class="remember-me-row">
+              <div>
+                <span class="remember-label">로그인 상태 유지</span>
+                <span class="remember-sub">다음에는 자동으로 로그인돼요</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block hard-shadow" style="margin-top: 24px;">
+              <span>로그인</span>
+            </button>
+            
+            <div class="form-actions center-actions">
+              <button type="button" class="text-link" id="btn-forgot-pw">비밀번호를 잊으셨나요?</button>
+            </div>
+
+            <div class="social-divider">
+              <span>또는</span>
+            </div>
+            <div class="social-login-group">
+              <button type="button" class="social-btn" style="background:#fff; border:2px solid var(--text-dark); color:var(--text-dark);"><strong>G</strong></button>
+              <button type="button" class="social-btn" style="background:var(--accent-gold); border:2px solid var(--text-dark); color:var(--text-dark);"><strong>K</strong></button>
+              <button type="button" class="social-btn" style="background:var(--text-dark); border:2px solid var(--text-dark); color:#fff;"><i class="fa-brands fa-apple"></i></button>
+            </div>
+
+            <div class="auth-switch-link">
+              계정이 없으신가요? <button type="button" class="tab-btn-switch" data-tab="signup">회원가입</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 회원가입 컨테이너 -->
+        <div id="signup-container" class="auth-container hidden">
+          <div class="logo-box" style="text-align: left; margin-bottom: 24px;">
+            <button class="retro-back-btn" aria-label="뒤로가기">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="logo-title" style="font-size: 24px; margin-top: 16px;">반가워요!<br>계정을 만들어볼까요</h1>
+            <p class="logo-tagline">이메일로 가입하고 몽글이를 키워보세요.</p>
+          </div>
+
+          <form id="form-signup" class="auth-form">
+            <label class="form-label">이메일</label>
+            <div class="input-group">
+              <input type="email" id="signup-email" placeholder="example@email.com" required>
+            </div>
+            <p class="validation-msg hidden" id="val-email">이메일 형식을 확인해주세요.</p>
+
+            <label class="form-label">비밀번호</label>
+            <div class="input-group">
+              <input type="password" id="signup-password" placeholder="8자 이상 입력해주세요" required>
+              <button type="button" class="password-toggle" aria-label="비밀번호 표시">
+                <i class="fa-solid fa-eye-slash"></i>
+              </button>
+            </div>
+            <p class="validation-msg hidden" id="val-pw">비밀번호는 8자 이상이어야 해요.</p>
+
+            <label class="form-label">비밀번호 확인</label>
+            <div class="input-group">
+              <input type="password" id="signup-password-confirm" placeholder="비밀번호를 한 번 더 입력해주세요" required>
+              <button type="button" class="password-toggle" aria-label="비밀번호 표시">
+                <i class="fa-solid fa-eye-slash"></i>
+              </button>
+            </div>
+            <p class="validation-msg hidden" id="val-pw-confirm">비밀번호가 일치하지 않아요.</p>
+
+            <button type="submit" class="btn btn-primary btn-block hard-shadow" style="margin-top: 24px;">
+              <span>가입하기</span>
+            </button>
+
+            <div class="social-divider">
+              <span>또는</span>
+            </div>
+            <div class="social-login-group">
+              <button type="button" class="social-btn" style="background:#fff; border:2px solid var(--text-dark); color:var(--text-dark);"><strong>G</strong></button>
+              <button type="button" class="social-btn" style="background:var(--accent-gold); border:2px solid var(--text-dark); color:var(--text-dark);"><strong>K</strong></button>
+              <button type="button" class="social-btn" style="background:var(--text-dark); border:2px solid var(--text-dark); color:#fff;"><i class="fa-brands fa-apple"></i></button>
+            </div>
+
+            <div class="auth-switch-link">
+              이미 계정이 있으신가요? <button type="button" class="tab-btn-switch" data-tab="login">로그인</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- VIEW 2: 건강 프로필 입력 및 AI 영양제 추천 -->
+      <section id="view-profile-setup" class="view-section hidden">
+        <div class="setup-container">
+          <div class="step-indicator">
+            <div class="step active" data-step="1">1</div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">2</div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">3</div>
+          </div>
+
+          <div id="setup-step-1" class="setup-step-content active">
+            <h2>건강 프로필 설정</h2>
+            <p class="step-desc">맞춤형 영양제와 캐릭터 추천을 위해 알려주세요.</p>
+            
+            <div class="form-group">
+              <label>연령대</label>
+              <div class="chip-group" id="chip-age">
+                <button class="chip" data-value="10s">10대</button>
+                <button class="chip active" data-value="20s">20대</button>
+                <button class="chip" data-value="30s">30대</button>
+                <button class="chip" data-value="40s+">40대 이상</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>성별</label>
+              <div class="chip-group" id="chip-gender">
+                <button class="chip active" data-value="female">여성</button>
+                <button class="chip" data-value="male">남성</button>
+                <button class="chip" data-value="other">기타</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>주요 건강 고민 (다중 선택)</label>
+              <div class="chip-group multi" id="chip-concerns">
+                <button class="chip active" data-value="fatigue">피로 회복</button>
+                <button class="chip active" data-value="turtle-neck">거북목/목통증</button>
+                <button class="chip" data-value="eye">눈 피로</button>
+                <button class="chip" data-value="gut">장 건강</button>
+                <button class="chip" data-value="immunity">면역력</button>
+              </div>
+            </div>
+
+            <button id="btn-next-step-1" class="btn btn-primary btn-block">다음 단계</button>
+          </div>
+
+          <div id="setup-step-2" class="setup-step-content hidden">
+            <h2>AI 영양제 맞춤 추천</h2>
+            <p class="step-desc">프로필 분석 기반 추천 영양제 목록입니다.</p>
+
+            <div class="recommend-list" id="recommend-list">
+              <!-- JS 동적 생성 -->
+            </div>
+
+            <div class="action-row">
+              <button id="btn-add-custom-supp" class="btn btn-secondary"><i class="fa-solid fa-plus"></i> 직접 등록</button>
+              <button id="btn-next-step-2" class="btn btn-primary">등록 완료 & 계속</button>
+            </div>
+          </div>
+
+          <div id="setup-step-3" class="setup-step-content hidden">
+            <h2>파트너 HPet 캐릭터 선택</h2>
+            <p class="step-desc">함께 건강 습관을 키워나갈 펫을 선택하세요!</p>
+
+            <div class="pet-selection-grid" id="pet-selection-grid">
+              <!-- JS 동적 생성 -->
+            </div>
+
+            <button id="btn-finish-setup" class="btn btn-primary btn-block glow">HPet과 함께 시작하기!</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: 메인 다마고치 대시보드 (홈) -->
+      <section id="view-dashboard" class="view-section hidden">
+        <!-- 다마고치 케이스 테두리 비주얼 -->
+        <div class="tamagotchi-screen-frame">
+          
+          <!-- 게이지 요약 헤더 -->
+          <div class="dashboard-gauges">
+            <div class="gauge-item">
+              <div class="gauge-label">
+                <i class="fa-solid fa-flask-vial"></i> 영양제 경험치
+              </div>
+              <div class="gauge-bar-outer">
+                <div class="gauge-bar-inner exp-bar" id="bar-exp" style="width: 68%;"></div>
+              </div>
+              <span class="gauge-value" id="val-exp">68 / 100</span>
+            </div>
+
+            <div class="gauge-item">
+              <div class="gauge-label">
+                <i class="fa-solid fa-child-reaching"></i> 자세 건강도
+              </div>
+              <div class="gauge-bar-outer">
+                <div class="gauge-bar-inner posture-bar" id="bar-posture" style="width: 85%;"></div>
+              </div>
+              <span class="gauge-value" id="val-posture">85 / 100</span>
+            </div>
+          </div>
+
+          <!-- 다마고치 캐릭터 영역 -->
+          <div class="pet-stage" id="pet-stage">
+            <div class="stage-bg-pattern"></div>
+            
+            <!-- 캐릭터 상태 인디케이터 (말풍선/경고) -->
+            <div class="pet-speech-bubble" id="pet-speech">
+              "오늘의 영양제를 챙겨먹고 포션을 주세요!"
+            </div>
+
+            <!-- 메인 캐릭터 (char_*.png 이미지 사용) -->
+            <div class="tamagotchi-pet-wrapper" id="tamagotchi-pet-wrapper">
+              <div class="pet-avatar-container" id="pet-avatar-container">
+                <!-- JS에서 랜덤 배정된 캐릭터 이미지로 교체됨 (백엔드 연동 전 임시 랜덤 배정) -->
+                <img class="pet-char-img" id="pet-char-img" src="char_turtle.png" alt="HPet 캐릭터">
+              </div>
+              <div class="pet-shadow"></div>
+            </div>
+
+            <!-- 캐릭터 조작 레트로 액션 버튼 -->
+            <div class="pet-quick-actions">
+              <button class="retro-btn" id="btn-pet-feed" title="밥주기(포션 사용)">
+                <i class="fa-solid fa-prescription-bottle-medical"></i> <span>포션 먹이기</span>
+              </button>
+              <button class="retro-btn" id="btn-pet-play" title="놀아주기">
+                <i class="fa-solid fa-heart"></i> <span>쓰다듬기</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 오늘의 영양제 미션 목록 카드리스트 -->
+          <div class="mission-section">
+            <div class="section-title-row">
+              <h3><i class="fa-solid fa-capsules"></i> 오늘의 영양제</h3>
+              <span class="date-tag" id="current-date-tag">8월 2일 (일)</span>
+            </div>
+
+            <div class="mission-list" id="today-mission-list">
+              <!-- JS dynamic insertion -->
+            </div>
+            
+            <button id="btn-add-supp-dashboard" class="btn btn-outline btn-block" style="margin-top: 12px; padding: 10px; font-size: 13px; font-weight: 700; border: 2px dashed var(--border-light); color: var(--text-mid);">
+              <i class="fa-solid fa-plus"></i> 새로운 영양제 추가하기
+            </button>
+          </div>
+
+          <!-- 하단 퀵 액션 카드 바 -->
+          <div class="quick-action-cards">
+            <button class="action-card color-1" id="btn-action-auth">
+              <div class="card-icon"><i class="fa-solid fa-camera"></i></div>
+              <div class="card-info">
+                <strong>영양제 사진 인증</strong>
+                <span>AI가 사진을 분석해요</span>
+              </div>
+            </button>
+            
+            <button class="action-card color-2" id="btn-action-game">
+              <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
+              <div class="card-info">
+                <strong>자세 교정 미니게임</strong>
+                <span>목·어깨 스트레칭</span>
+              </div>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- VIEW 4: 영양제 AI 카메라 인증 모달/화면 -->
+      <section id="view-camera-auth" class="view-section hidden">
+        <div class="camera-container">
+          <div class="cam-header">
+            <button class="btn-back" id="btn-close-cam"><i class="fa-solid fa-chevron-left"></i></button>
+            <h3>영양제 AI 촬영 인증</h3>
+            <div></div>
+          </div>
+
+          <div class="viewfinder-box">
+            <video id="webcam-preview" autoplay playsinline muted class="webcam-video"></video>
+            <canvas id="snapshot-canvas" class="hidden"></canvas>
+
+            <div class="viewfinder-overlay">
+              <p class="guide-text">영양제를 라벨이 보이도록 중앙에 맞춰주세요</p>
+            </div>
+
+            <div class="ai-scanning-overlay hidden" id="ai-scanning-overlay">
+              <div class="scanner-line"></div>
+              <div class="ai-badge pulse"><i class="fa-solid fa-brain"></i> AI 분석 중...</div>
+            </div>
+          </div>
+
+          <div class="cam-controls">
+            <button class="shutter-btn" id="btn-shutter">
+              <div class="shutter-inner"></div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: 자세 분석 & 자세 교정 미니게임 -->
+      <section id="view-posture-game" class="view-section hidden">
+        <div class="game-container">
+          <div class="cam-header">
+            <button class="btn-back" id="btn-close-game"><i class="fa-solid fa-chevron-left"></i></button>
+            <h3>자세 교정 미니게임</h3>
+            <div></div>
+          </div>
+
+          <div class="game-canvas-area">
+            <video id="posture-webcam" autoplay playsinline muted class="webcam-video"></video>
+            
+            <div class="posture-status-box" id="posture-status-box">
+              <div class="status-indicator good" id="posture-indicator">
+                <i class="fa-solid fa-face-smile"></i>
+                <span id="posture-status-text">바른 자세 유지 중!</span>
+              </div>
+              <div class="timer-display" id="game-timer">00:30</div>
+            </div>
+
+            <div class="turtle-warning-banner hidden" id="turtle-warning">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>거북목 자세 감지! 턱을 당겨주세요!</span>
+            </div>
+          </div>
+
+          <div class="game-instructions">
+            <p><i class="fa-solid fa-circle-info"></i> 올바른 자세를 30초간 유지하면 <strong>성장 포션 +50</strong> 보상을 받습니다!</p>
+            <button id="btn-start-posture-game" class="btn btn-primary btn-block glow">미니게임 시작</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: 캘린더 & 기록 히스토리 -->
+      <section id="view-history" class="view-section hidden">
+        <div class="history-container">
+          <h2>복용 및 자세 히스토리</h2>
+          
+          <div class="calendar-card glass-panel">
+            <div class="cal-month-header">
+              <button id="btn-prev-month"><i class="fa-solid fa-chevron-left"></i></button>
+              <h3 id="cal-month-title">2026년 8월</h3>
+              <button id="btn-next-month"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            
+            <div class="calendar-grid" id="calendar-grid">
+              <!-- JS 생성 -->
+            </div>
+          </div>
+
+          <div class="stats-card glass-panel">
+            <h3>자세 불량 감지 리포트</h3>
+            <div class="stats-summary">
+              <div class="stat-box">
+                <span class="stat-num" id="stat-turtle-count">4회</span>
+                <span class="stat-label">이번 주 감지</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-num" id="stat-game-clear">12회</span>
+                <span class="stat-label">미니게임 성공</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: 설정 및 프로필 관리 -->
+      <section id="view-profile" class="view-section hidden">
+        <div class="profile-container">
+          <h2>내 프로필</h2>
+          
+          <div class="profile-header-card glass-panel">
+            <div class="user-avatar large" id="profile-avatar"><i class="fa-solid fa-user"></i></div>
+            <div class="profile-info-text">
+              <h3 id="profile-name-display">김하늘님</h3>
+              <p id="profile-email-display">sky@hpet.io</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-edit-profile"><i class="fa-solid fa-pen"></i> 수정</button>
+          </div>
+
+          <div class="settings-group">
+            <h4 class="settings-title">앱 설정</h4>
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fa-solid fa-moon"></i> 다크 모드
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-dark-mode">
+                <span class="slider theme-slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fa-solid fa-bell"></i> 푸시 알림
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-push" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h4 class="settings-title">계정 관리</h4>
+            <button class="setting-item text-btn" id="btn-logout">
+              <div class="setting-label text-mid">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃
+              </div>
+            </button>
+            <button class="setting-item text-btn" id="btn-delete-account">
+              <div class="setting-label text-danger">
+                <i class="fa-solid fa-user-xmark"></i> 회원탈퇴
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 하단 탭 바 (로그인 후 대시보드에서 표시) -->
+      <nav id="app-nav" class="bottom-nav hidden">
+        <button class="nav-item active" data-view="dashboard">
+          <i class="fa-solid fa-house"></i>
+          <span>홈</span>
+        </button>
+        <button class="nav-item" data-view="history">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>기록</span>
+        </button>
+        <button class="nav-item" data-view="profile">
+          <i class="fa-solid fa-user"></i>
+          <span>프로필</span>
+        </button>
+      </nav>
+
+      <!-- 팝업 모달 1: 비밀번호 재설정 모달 -->
+      <div id="modal-forgot-pw" class="modal-overlay hidden">
+        <div class="modal-card pop-in">
+          <h3>비밀번호 재설정</h3>
+          <p class="modal-sub">가입한 이메일로 비밀번호 재설정 링크를 보내드립니다.</p>
+          <div class="input-group" style="margin-top: 14px;">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input type="email" placeholder="이메일 입력" value="sky@hpet.io">
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-forgot-pw').classList.add('hidden')">취소</button>
+            <button class="btn btn-primary" onclick="alert('재설정 이메일이 발송되었습니다.'); document.getElementById('modal-forgot-pw').classList.add('hidden')">발송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 팝업 모달 2: 알림 권한 동의 — Pill & Pose iOS 스타일 -->
+      <div id="modal-permissions" class="modal-overlay hidden">
+        <div class="modal-card pop-in" style="max-width: 320px;">
+          <div class="notification-icon">
+            🔔
+          </div>
+          <h3>알림을 받아보시겠어요?</h3>
+          <p class="modal-sub">정해둔 복용 시간과 자세 알림("풍글이 얼굴이 커졌어요")을 받으려면 알림 권한이 필요해요.</p>
+          
+          <div class="perm-modal-actions">
+            <button class="btn btn-primary btn-block" id="btn-grant-permissions">허용</button>
+            <button class="btn btn-outline btn-block" onclick="document.getElementById('modal-permissions').classList.add('hidden')">허용 안 함</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 팝업 모달 3: 커스텀 영양제 직접 등록 모달 -->
+      <div id="modal-custom-supp" class="modal-overlay hidden">
+        <div class="modal-card pop-in">
+          <h3>영양제 직접 등록</h3>
+          <div class="input-group" style="margin-top: 14px;">
+            <input type="text" id="custom-supp-name" placeholder="영양제 이름 (예: 종합비타민)">
+          </div>
+          <div class="input-group">
+            <input type="text" id="custom-supp-time" placeholder="복용 시간 (예: 08:00 AM)" value="09:00 AM">
+          </div>
+          <div class="modal-actions" id="form-add-supp">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-custom-supp').classList.add('hidden')">취소</button>
+            <button class="btn btn-primary" id="btn-save-custom-supp">등록하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 글로벌 결과 / 보상 모달 -->
+      <div id="modal-reward" class="modal-overlay hidden">
+        <div class="modal-card pop-in">
+          <div class="reward-sparkles">✨ 🎉 ✨</div>
+          <div class="reward-icon" id="reward-icon">🧪</div>
+          <h3 id="reward-title">복용 인증 성공!</h3>
+          <p id="reward-desc">포션을 획득하여 HPet 캐릭터 성장치 +20 이 상승했습니다!</p>
+          <button class="btn btn-primary" id="btn-close-reward">확인</button>
+        </div>
+      </div>
+
+      <!-- 팝업 모달: 프로필 수정 -->
+      <div id="modal-edit-profile" class="modal-overlay hidden">
+        <div class="modal-card pop-in">
+          <h3>프로필 수정</h3>
+          <div class="input-group" style="margin-top: 14px;">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input type="text" id="edit-profile-name" placeholder="새로운 닉네임 입력">
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-secondary" id="btn-close-edit-profile">취소</button>
+            <button class="btn btn-primary" id="btn-save-profile">저장</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- 다마고치 버튼 데코레이션 (물리 버튼 모양) -->
+    <div class="frame-bottom-buttons">
+      <div class="tamagotchi-btn btn-a" id="tamagotchi-phy-a" title="A 버튼">A</div>
+      <div class="tamagotchi-btn btn-b" id="tamagotchi-phy-b" title="B 버튼">B</div>
+      <div class="tamagotchi-btn btn-c" id="tamagotchi-phy-c" title="C 버튼">C</div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/onboarding-profile.js"></script>
+  <script src="js/character.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/supplement-auth.js"></script>
+  <script src="js/posture-game.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
