@@ -63,7 +63,7 @@ public class UserSupplementService {
     public List<UserSupplementResponse> getMyList(Long userId) {
         return userSupplementRepository.findByUserId(userId).stream()
                 .map(us -> new UserSupplementResponse(
-                        us.getSupplement().getId(), us.getSupplement().getName(), us.getRegisteredAt()))
+                        us.getId(), us.getSupplement().getId(), us.getSupplement().getName(), us.getRegisteredAt()))
                 .toList();
     }
 }
