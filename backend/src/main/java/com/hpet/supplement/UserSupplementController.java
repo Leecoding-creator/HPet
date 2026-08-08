@@ -35,4 +35,12 @@ public class UserSupplementController {
     public ResponseEntity<ApiResponse<List<UserSupplementResponse>>> getMine(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(ApiResponse.success(userSupplementService.getMyList(userId)));
     }
+
+    @Operation(summary = "영양제 등록 취소 - 관련 복용기록/알림이 있으면 삭제 불가")
+    @DeleteMapping("/{userSupplementId}")
+    public ResponseEntity<ApiResponse<Void>> unregister(
+            @AuthenticationPrincipal Long userId, @PathVariable Long userSupplementId) {
+        userSupplementService.unregister(userId, userSupplementId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }

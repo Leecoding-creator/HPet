@@ -27,6 +27,20 @@ jwt:
   access-token-expiration-ms: 3600000        # 1시간
   refresh-token-expiration-ms: 1209600000    # 14일
 
+# Phase 5 - AI 비전 인증. API 키는 절대 여기 직접 쓰지 말고 환경변수로 주입할 것.
+# 실행 전에 터미널에서: export OPENAI_API_KEY=sk-xxxx (Windows는 set OPENAI_API_KEY=sk-xxxx)
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: gpt-5.6-sol
+  vision-endpoint: https://api.openai.com/v1/chat/completions
+  # 팀 피드백: 원본(3~4MB급) 그대로 보내면 토큰이 9천~1만 정도 소모됨.
+  # 판정 정확도에 지장 없는 선(512~1024px)까지 축소해서 비용/Rate Limit 부담을 줄인다.
+  max-image-dimension: 1024
+  image-quality: 0.85
+
+spring.servlet.multipart.max-file-size: 10MB
+spring.servlet.multipart.max-request-size: 10MB
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
