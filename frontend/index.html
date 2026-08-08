@@ -237,98 +237,92 @@
         </div>
       </section>
 
-      <!-- VIEW 3: 메인 다마고치 대시보드 (홈) -->
+      <!-- VIEW 3: 메인 홈 (대시보드) -->
       <section id="view-dashboard" class="view-section hidden">
-        <!-- 다마고치 케이스 테두리 비주얼 -->
-        <div class="tamagotchi-screen-frame">
-          
-          <!-- 게이지 요약 헤더 -->
-          <div class="dashboard-gauges">
-            <div class="gauge-item">
-              <div class="gauge-label">
-                <i class="fa-solid fa-flask-vial"></i> 영양제 경험치
-              </div>
-              <div class="gauge-bar-outer">
-                <div class="gauge-bar-inner exp-bar" id="bar-exp" style="width: 68%;"></div>
-              </div>
-              <span class="gauge-value" id="val-exp">68 / 100</span>
-            </div>
+        <!-- 배경 장식 (방 이미지 등 대체용) -->
+        <div class="home-bg-layer"></div>
 
-            <div class="gauge-item">
-              <div class="gauge-label">
-                <i class="fa-solid fa-child-reaching"></i> 자세 건강도
-              </div>
-              <div class="gauge-bar-outer">
-                <div class="gauge-bar-inner posture-bar" id="bar-posture" style="width: 85%;"></div>
-              </div>
-              <span class="gauge-value" id="val-posture">85 / 100</span>
-            </div>
+        <!-- 상단 헤더: 토비, 옷장, 레벨 -->
+        <div class="home-header">
+          <div class="home-title-row">
+            <h1 class="character-name">토비 <i class="fa-solid fa-leaf text-primary"></i></h1>
+            <button class="icon-btn closet-btn" id="btn-closet" aria-label="옷장">
+              <i class="fa-solid fa-shirt"></i>
+            </button>
           </div>
-
-          <!-- 다마고치 캐릭터 영역 -->
-          <div class="pet-stage" id="pet-stage">
-            <div class="stage-bg-pattern"></div>
-            
-            <!-- 캐릭터 상태 인디케이터 (말풍선/경고) -->
-            <div class="pet-speech-bubble" id="pet-speech">
-              "오늘의 영양제를 챙겨먹고 포션을 주세요!"
+          <div class="level-progress-row">
+            <span class="level-text">Lv2.</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: 53%;"></div>
             </div>
+            <span class="progress-text"><strong>70</strong> / 130</span>
+          </div>
+        </div>
 
-            <!-- 메인 캐릭터 (char_*.png 이미지 사용) -->
-            <div class="tamagotchi-pet-wrapper" id="tamagotchi-pet-wrapper">
-              <div class="pet-avatar-container" id="pet-avatar-container">
-                <!-- JS에서 랜덤 배정된 캐릭터 이미지로 교체됨 (백엔드 연동 전 임시 랜덤 배정) -->
-                <img class="pet-char-img" id="pet-char-img" src="char_turtle.png" alt="HPet 캐릭터">
+        <!-- 중앙 캐릭터 영역 -->
+        <div class="home-character-area" id="home-character-area">
+          <div class="speech-bubble pop-animation" id="pet-speech">
+            오늘도<br>잘 부탁해!<br>❤️
+          </div>
+          <div class="character-wrapper" id="pet-character-wrapper" style="position: relative;">
+            <!-- 백엔드 연결 전까지 기본 이미지 사용 -->
+            <img src="char_chick.png" alt="토비" class="main-character-img bounce-animation" id="main-pet-img">
+            <!-- 장착 아이템 오버레이 레이어 -->
+            <div id="equipped-item-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+          </div>
+        </div>
+
+        <!-- 하단 카드 영역 -->
+        <div class="home-cards-container">
+          <!-- 왼쪽 카드: 오늘 복용 -->
+          <div class="home-card pill-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-capsules text-yellow"></i> 오늘 복용</h3>
+              <span class="fraction-text"><strong class="text-yellow">3</strong> / 5</span>
+            </div>
+            <div class="pill-list" id="today-mission-list">
+              <div class="pill-item taken">
+                <i class="fa-solid fa-capsules pill-icon yellow"></i>
+                <span class="pill-name">비타민C</span>
+                <span class="pill-time">08:00</span>
+                <i class="fa-solid fa-circle-check check-icon text-green"></i>
               </div>
-              <div class="pet-shadow"></div>
+              <div class="pill-item taken">
+                <i class="fa-solid fa-capsules pill-icon blue"></i>
+                <span class="pill-name">오메가3</span>
+                <span class="pill-time">12:00</span>
+                <i class="fa-solid fa-circle-check check-icon text-green"></i>
+              </div>
+              <div class="pill-item">
+                <i class="fa-solid fa-capsules pill-icon red"></i>
+                <span class="pill-name">마그네슘</span>
+                <span class="pill-time">19:00</span>
+                <i class="fa-regular fa-circle check-icon text-gray"></i>
+              </div>
             </div>
-
-            <!-- 캐릭터 조작 레트로 액션 버튼 -->
-            <div class="pet-quick-actions">
-              <button class="retro-btn" id="btn-pet-feed" title="밥주기(포션 사용)">
-                <i class="fa-solid fa-prescription-bottle-medical"></i> <span>포션 먹이기</span>
+            <div class="card-actions">
+              <button class="btn btn-yellow btn-block" id="btn-action-auth">
+                <i class="fa-solid fa-camera"></i> 영양제 인증하기
               </button>
-              <button class="retro-btn" id="btn-pet-play" title="놀아주기">
-                <i class="fa-solid fa-heart"></i> <span>쓰다듬기</span>
+              <button class="btn btn-light-green btn-block" id="btn-view-all">
+                전체 보기
               </button>
             </div>
           </div>
 
-          <!-- 오늘의 영양제 미션 목록 카드리스트 -->
-          <div class="mission-section">
-            <div class="section-title-row">
-              <h3><i class="fa-solid fa-capsules"></i> 오늘의 영양제</h3>
-              <span class="date-tag" id="current-date-tag">8월 2일 (일)</span>
+          <!-- 오른쪽 카드: 자세 교정 -->
+          <div class="home-card posture-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-child-reaching text-green"></i> 자세 교정</h3>
             </div>
-
-            <div class="mission-list" id="today-mission-list">
-              <!-- JS dynamic insertion -->
+            <div class="posture-character-wrapper">
+              <img src="char_chick.png" alt="스트레칭" class="posture-character-img">
             </div>
-            
-            <button id="btn-add-supp-dashboard" class="btn btn-outline btn-block" style="margin-top: 6px; padding: 7px; font-size: 12px; font-weight: 700; border: 2px dashed var(--border-light); color: var(--text-mid);">
-              <i class="fa-solid fa-plus"></i> 새로운 영양제 추가하기
+            <p class="posture-text">바른 자세로 건강해져요!</p>
+            <button class="btn btn-green btn-block" id="btn-action-game">
+              <i class="fa-solid fa-gamepad"></i> 미니게임 시작
             </button>
           </div>
-
-          <!-- 하단 퀵 액션 카드 바 -->
-          <div class="quick-action-cards">
-            <button class="action-card color-1" id="btn-action-auth">
-              <div class="card-icon"><i class="fa-solid fa-camera"></i></div>
-              <div class="card-info">
-                <strong>영양제 사진 인증</strong>
-                <span>AI가 사진을 분석해요</span>
-              </div>
-            </button>
-            
-            <button class="action-card color-2" id="btn-action-game">
-              <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
-              <div class="card-info">
-                <strong>자세 교정 미니게임</strong>
-                <span>목·어깨 스트레칭</span>
-              </div>
-            </button>
-          </div>
-
         </div>
       </section>
 
@@ -402,10 +396,18 @@
           <h2>복용 및 자세 히스토리</h2>
           
           <div class="calendar-card glass-panel">
-            <div class="cal-month-header">
+            <div class="cal-month-header" style="position: relative;">
               <button id="btn-prev-month"><i class="fa-solid fa-chevron-left"></i></button>
-              <h3 id="cal-month-title">2026년 8월</h3>
+              <div style="position: relative; display: flex; align-items: center; cursor: pointer;" id="cal-month-title-wrapper">
+                <h3 id="cal-month-title">2026년 8월</h3>
+                <i class="fa-solid fa-caret-down" style="font-size:12px; margin-left: 6px; color: var(--text-mid);"></i>
+                <!-- 모바일 네이티브 월 선택기 (투명하게 덮어씌움) -->
+                <input type="month" id="cal-month-picker" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
+              </div>
               <button id="btn-next-month"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div style="text-align: right; margin-bottom: 4px; margin-top: -10px;">
+              <button id="btn-go-today" class="btn btn-sm" style="padding: 4px 12px; font-size: 11px; border-radius: 20px; background: var(--primary-pale); color: var(--primary-dark); font-weight: 700; border: none;">오늘</button>
             </div>
             
             <div class="calendar-grid" id="calendar-grid">
@@ -413,16 +415,26 @@
             </div>
           </div>
 
-          <div class="stats-card glass-panel">
-            <h3>자세 불량 감지 리포트</h3>
-            <div class="stats-summary">
-              <div class="stat-box">
-                <span class="stat-num" id="stat-turtle-count">4회</span>
-                <span class="stat-label">이번 주 감지</span>
+          <div class="stats-card glass-panel" style="margin-top: 16px; padding: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 16px; color: var(--text-dark);">주간 달성 리포트</h3>
+            
+            <div class="stat-progress-row" style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 13px; font-weight: 600; color: var(--text-dark);">영양제 복용률</span>
+                <span id="stat-supp-percent" style="font-size: 13px; color: var(--primary); font-weight: 700;">85%</span>
               </div>
-              <div class="stat-box">
-                <span class="stat-num" id="stat-game-clear">12회</span>
-                <span class="stat-label">미니게임 성공</span>
+              <div class="progress-bar-container" style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+                <div id="stat-supp-bar" class="progress-bar-fill" style="width: 85%; background: var(--primary); height: 100%; border-radius: 5px; transition: width 0.5s ease;"></div>
+              </div>
+            </div>
+
+            <div class="stat-progress-row">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-size: 13px; font-weight: 600; color: var(--text-dark);">바른 자세 유지</span>
+                <span id="stat-posture-percent" style="font-size: 13px; color: var(--accent-red); font-weight: 700;">4회 경고</span>
+              </div>
+              <div class="progress-bar-container" style="height: 10px; background: #e0e0e0; border-radius: 5px; overflow: hidden;">
+                <div id="stat-posture-bar" class="progress-bar-fill" style="width: 30%; background: var(--accent-red); height: 100%; border-radius: 5px; transition: width 0.5s ease;"></div>
               </div>
             </div>
           </div>
@@ -488,11 +500,11 @@
           <span>홈</span>
         </button>
         <button class="nav-item" data-view="history">
-          <i class="fa-solid fa-calendar-days"></i>
+          <i class="fa-regular fa-calendar"></i>
           <span>기록</span>
         </button>
         <button class="nav-item" data-view="profile">
-          <i class="fa-solid fa-user"></i>
+          <i class="fa-regular fa-user"></i>
           <span>프로필</span>
         </button>
       </nav>
@@ -529,20 +541,36 @@
         </div>
       </div>
 
-      <!-- 팝업 모달 3: 커스텀 영양제 직접 등록 모달 -->
+      <!-- 팝업 모달 3: 영양제 관리 리스트 모달 -->
+      <div id="modal-manage-supplements" class="modal-overlay hidden">
+        <div class="modal-card pop-in">
+          <div class="cam-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <h3>영양제 관리</h3>
+            <button class="btn-back" id="btn-close-manage-supps" style="width:28px; height:28px;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="manage-supps-list" id="manage-supps-list">
+            <!-- JS 렌더링 -->
+          </div>
+          <button class="btn btn-primary btn-block" id="btn-open-add-supp" style="margin-top: 16px;">+ 새 영양제 추가</button>
+        </div>
+      </div>
+
+      <!-- 팝업 모달 4: 영양제 추가/수정 공용 모달 -->
       <div id="modal-custom-supp" class="modal-overlay hidden">
         <div class="modal-card pop-in">
-          <h3>영양제 직접 등록</h3>
+          <h3 id="modal-supp-title">영양제 등록</h3>
           <div class="input-group" style="margin-top: 14px;">
             <input type="text" id="custom-supp-name" placeholder="영양제 이름 (예: 종합비타민)">
           </div>
           <div class="input-group">
             <input type="text" id="custom-supp-time" placeholder="복용 시간 (예: 08:00 AM)" value="09:00 AM">
           </div>
+          <input type="hidden" id="custom-supp-id" value="">
           <div class="modal-actions" id="form-add-supp">
             <button class="btn btn-secondary" onclick="document.getElementById('modal-custom-supp').classList.add('hidden')">취소</button>
-            <button class="btn btn-primary" id="btn-save-custom-supp">등록하기</button>
+            <button class="btn btn-primary" id="btn-save-custom-supp">저장하기</button>
           </div>
+          <button class="btn btn-outline btn-block text-danger hidden" id="btn-delete-supp" style="margin-top: 10px; border-color: #ffcccc; color: #d9534f;">삭제하기</button>
         </div>
       </div>
 
@@ -572,6 +600,56 @@
         </div>
       </div>
 
+      <!-- 팝업 모달 5: 옷장 (캐릭터 꾸미기) -->
+      <div id="modal-closet" class="modal-overlay hidden" style="z-index: 1000;">
+        <div class="modal-card pop-in" style="height: 80%; display: flex; flex-direction: column;">
+          <div class="cam-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <h3>내 옷장</h3>
+            <button class="btn-back" id="btn-close-closet" style="width:28px; height:28px;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          
+          <!-- 미리보기 영역 -->
+          <div class="closet-preview-area" style="background: var(--bg-main); border-radius: 12px; padding: 20px; text-align: center; position: relative; margin-bottom: 16px;">
+            <div style="position: relative; display: inline-block; width: 120px; height: 120px;">
+              <img src="char_chick.png" alt="preview" style="width: 100%; height: 100%; object-fit: contain;">
+              <div id="closet-preview-item" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; font-size: 60px; line-height: 120px; display: none;"></div>
+            </div>
+          </div>
+
+          <!-- 카테고리 탭 (향후 확장용) -->
+          <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <button class="btn btn-sm btn-primary" style="flex:1;">전체</button>
+            <button class="btn btn-sm btn-outline" style="flex:1;">머리</button>
+            <button class="btn btn-sm btn-outline" style="flex:1;">얼굴</button>
+          </div>
+
+          <!-- 아이템 그리드 -->
+          <div class="closet-grid" id="closet-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; flex: 1; padding-right: 4px;">
+            <!-- JS로 동적 렌더링 -->
+          </div>
+
+          <div class="modal-actions" style="margin-top: 16px;">
+            <button class="btn btn-primary btn-block" id="btn-save-closet">저장하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 팝업 모달 6: 데일리 타임라인 (바텀 시트) -->
+      <div id="modal-daily-detail" class="modal-overlay hidden" style="align-items: flex-end; padding: 0;">
+        <div class="bottom-sheet pop-up" style="background: var(--bg-card); width: 100%; max-width: 480px; border-radius: 24px 24px 0 0; padding: 24px; box-shadow: 0 -4px 20px rgba(0,0,0,0.3); max-height: 80vh; display: flex; flex-direction: column;">
+          <div style="width: 40px; height: 5px; background: var(--border-light); border-radius: 3px; margin: 0 auto 16px;"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 id="daily-detail-date" style="font-size: 20px; font-weight: 800; color: var(--text-dark);">8월 12일 기록</h3>
+            <button class="btn-back" id="btn-close-daily" style="width:28px; height:28px; background: var(--primary-pale); border-radius: 50%;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div id="daily-timeline" style="flex: 1; overflow-y: auto; padding-right: 4px;">
+            <!-- JS로 동적 렌더링될 타임라인 -->
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <!-- 다마고치 버튼 데코레이션 (물리 버튼 모양) -->
@@ -581,7 +659,6 @@
       <div class="tamagotchi-btn btn-c" id="tamagotchi-phy-c" title="C 버튼">C</div>
     </div>
   </div>
-
   <script src="js/app.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/onboarding-profile.js"></script>

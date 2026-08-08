@@ -74,13 +74,31 @@ class HPetStore {
 
   loadState() {
     const saved = localStorage.getItem(this.STORAGE_KEY);
-    if (!saved) return this.getInitialState();
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      console.error('State parse error, fallback to initial state', e);
-      return this.getInitialState();
+    let state;
+    if (!saved) {
+      state = this.getInitialState();
+    } else {
+      try {
+        state = JSON.parse(saved);
+      } catch (e) {
+        console.error('State parse error, fallback to initial state', e);
+        state = this.getInitialState();
+      }
     }
+
+    // 테스트를 위한 8월 가상 데이터 강제 주입
+    if (!state.history['2026-08-01']) {
+      state.history['2026-08-01'] = { supplements: true, turtleCount: 1 };
+      state.history['2026-08-05'] = { supplements: true, turtleCount: 0 };
+      
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      state.history[todayStr] = { supplements: true, turtleCount: 3 }; // 오늘 날짜에도 데이터 주입
+      
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+    }
+    
+    return state;
   }
 
   saveState() {

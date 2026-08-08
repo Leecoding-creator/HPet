@@ -32,6 +32,28 @@ class HPetHistoryManager {
       }
       this.render();
     });
+
+    document.getElementById('btn-go-today')?.addEventListener('click', () => {
+      const now = new Date();
+      this.currentYear = now.getFullYear();
+      this.currentMonth = now.getMonth();
+      this.render();
+    });
+
+    const monthPicker = document.getElementById('cal-month-picker');
+    if (monthPicker) {
+      // 초기 밸류 세팅 (YYYY-MM)
+      const initValue = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}`;
+      monthPicker.value = initValue;
+
+      monthPicker.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        const parts = e.target.value.split('-');
+        this.currentYear = parseInt(parts[0], 10);
+        this.currentMonth = parseInt(parts[1], 10) - 1;
+        this.render();
+      });
+    }
   }
 
   render() {
@@ -45,6 +67,11 @@ class HPetHistoryManager {
     if (!titleEl || !gridEl) return;
 
     titleEl.textContent = `${this.currentYear}년 ${this.currentMonth + 1}월`;
+    
+    const monthPicker = document.getElementById('cal-month-picker');
+    if (monthPicker) {
+      monthPicker.value = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}`;
+    }
 
     const history = window.hpetStore.state.history || {};
 
@@ -86,8 +113,10 @@ class HPetHistoryManager {
       html += `
         <div class="${classes}" data-date="${dateKey}">
           <span class="day-num">${day}</span>
-          ${isChecked ? '<span class="day-badge">🧪</span>' : ''}
-          ${hasTurtle ? '<span class="day-badge turtle-badge">🐢</span>' : ''}
+          <div class="cal-dots">
+            ${isChecked ? '<div class="dot dot-supp"></div>' : ''}
+            ${hasTurtle ? '<div class="dot dot-turtle"></div>' : ''}
+          </div>
         </div>
       `;
     }
@@ -108,54 +137,108 @@ class HPetHistoryManager {
     const parts = dateKey.split('-');
     const label = `${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
 
-    if (!record) {
-      // 기록 없는 날: 간단한 안내
-      const rewardTitle = document.getElementById('reward-title');
-      const rewardDesc = document.getElementById('reward-desc');
-      const rewardIcon = document.getElementById('reward-icon');
-      const modal = document.getElementById('modal-reward');
+    const titleEl = document.getElementById('daily-detail-date');
+    const timelineEl = document.getElementById('daily-timeline');
+    const modal = document.getElementById('modal-daily-detail');
+    
+    if (titleEl) titleEl.textContent = `${label} 기록`;
 
-      if (rewardTitle) rewardTitle.textContent = `${label} 기록`;
-      if (rewardDesc) rewardDesc.textContent = '해당 날짜에 기록된 데이터가 없습니다.';
-      if (rewardIcon) rewardIcon.textContent = '📅';
-      if (modal) modal.classList.remove('hidden');
-
-      const closeBtn = document.getElementById('btn-close-reward');
-      if (closeBtn) {
-        closeBtn.onclick = () => modal.classList.add('hidden');
-      }
-      return;
-    }
-
-    const suppStatus = record.supplements ? '✅ 영양제 복용 완료' : '❌ 영양제 미복용';
-    const turtleStatus = record.turtleCount > 0
-      ? `🐢 거북목 감지 ${record.turtleCount}회`
-      : '👍 거북목 감지 없음';
-
-    const rewardTitle = document.getElementById('reward-title');
-    const rewardDesc = document.getElementById('reward-desc');
-    const rewardIcon = document.getElementById('reward-icon');
-    const modal = document.getElementById('modal-reward');
-
-    if (rewardTitle) rewardTitle.textContent = `${label} 기록`;
-    if (rewardDesc) rewardDesc.textContent = `${suppStatus}\n${turtleStatus}`;
-    if (rewardIcon) rewardIcon.textContent = '📋';
-    if (modal) modal.classList.remove('hidden');
-
-    const closeBtn = document.getElementById('btn-close-reward');
+    // 닫기 버튼 이벤트
+    const closeBtn = document.getElementById('btn-close-daily');
     if (closeBtn) {
       closeBtn.onclick = () => modal.classList.add('hidden');
     }
+
+    if (!record) {
+      timelineEl.innerHTML = `
+        <div style="text-align:center; padding: 40px 20px; color: var(--text-light);">
+          <i class="fa-regular fa-calendar-xmark" style="font-size: 40px; margin-bottom: 12px; color: #d0d0d0;"></i>
+          <p>해당 날짜에 기록된 데이터가 없습니다.</p>
+        </div>
+      `;
+      if (modal) modal.classList.remove('hidden');
+      return;
+    }
+
+    let timelineHtml = '';
+
+    // 영양제 복용 타임라인 (가상 시간)
+    if (record.supplements) {
+      timelineHtml += `
+        <div class="timeline-item">
+          <div class="timeline-time">08:00 AM</div>
+          <div class="timeline-icon supp"><i class="fa-solid fa-capsules"></i></div>
+          <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="timeline-title">영양제 복용 완료</div>
+              <div class="timeline-desc">비타민C 외 2개 복용 확인</div>
+            </div>
+            <button class="btn-more-options" onclick="alert('복용 기록을 수정하거나 삭제하시겠습니까? (Mock)')" title="기록 수정/삭제"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 거북목 타임라인 (가상 횟수)
+    if (record.turtleCount > 0) {
+      timelineHtml += `
+        <div class="timeline-item">
+          <div class="timeline-time">14:30 PM</div>
+          <div class="timeline-icon turtle"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="timeline-title">자세 불량 감지</div>
+              <div class="timeline-desc">총 ${record.turtleCount}회 거북목 자세 경고 발생</div>
+            </div>
+            <button class="btn-more-options" onclick="alert('자세 경고 기록을 삭제하시겠습니까? (Mock)')" title="기록 삭제"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          </div>
+        </div>
+      `;
+      // 미니게임 클리어 임시 이력 추가
+      timelineHtml += `
+        <div class="timeline-item">
+          <div class="timeline-time">14:40 PM</div>
+          <div class="timeline-icon" style="background:#e3f2fd; color:#1976d2;"><i class="fa-solid fa-gamepad"></i></div>
+          <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="timeline-title">자세 교정 미니게임 완료</div>
+              <div class="timeline-desc">스트레칭으로 자세를 교정했습니다!</div>
+            </div>
+            <button class="btn-more-options" onclick="alert('미니게임 기록을 삭제하시겠습니까? (Mock)')" title="기록 삭제"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (!timelineHtml) {
+      timelineHtml = `<div style="text-align:center; padding: 20px; color: var(--text-light);">세부 기록이 없습니다.</div>`;
+    }
+
+    timelineEl.innerHTML = timelineHtml;
+    if (modal) modal.classList.remove('hidden');
   }
 
   renderStats() {
     const stats = window.hpetStore.state.stats;
     
-    const turtleCountEl = document.getElementById('stat-turtle-count');
-    const gameClearEl = document.getElementById('stat-game-clear');
+    // 임의의 퍼센트 데이터 (실제 서비스에선 계산 로직 필요)
+    const suppPercent = 85; 
+    const turtleCount = stats.turtleNeckDetectionsThisWeek || 4;
 
-    if (turtleCountEl) turtleCountEl.textContent = `${stats.turtleNeckDetectionsThisWeek}회`;
-    if (gameClearEl) gameClearEl.textContent = `${stats.postureGamesCleared}회`;
+    const suppPercentEl = document.getElementById('stat-supp-percent');
+    const suppBarEl = document.getElementById('stat-supp-bar');
+    if (suppPercentEl) suppPercentEl.textContent = `${suppPercent}%`;
+    if (suppBarEl) suppBarEl.style.width = `${suppPercent}%`;
+
+    const posturePercentEl = document.getElementById('stat-posture-percent');
+    const postureBarEl = document.getElementById('stat-posture-bar');
+    
+    if (posturePercentEl) posturePercentEl.textContent = `${turtleCount}회 경고`;
+    if (postureBarEl) {
+      // 10회 경고를 100%로 가정
+      const pct = Math.min(100, (turtleCount / 10) * 100);
+      postureBarEl.style.width = `${pct}%`;
+    }
   }
 }
 
