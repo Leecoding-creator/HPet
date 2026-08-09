@@ -27,6 +27,10 @@ jwt:
   access-token-expiration-ms: 3600000        # 1시간
   refresh-token-expiration-ms: 1209600000    # 14일
 
+openai:
+  # backend/.env 의 OPENAI_API_KEY 를 spring-dotenv가 프로세스 환경변수처럼 로드해 채워준다.
+  api-key: ${OPENAI_API_KEY:}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
