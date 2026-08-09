@@ -17,6 +17,9 @@ class HPetDashboardManager {
     // 상태 변경 이벤트 수신 시 자동으로 화면 갱신
     window.addEventListener('hpet_state_changed', () => {
       this.render();
+      if (document.getElementById('modal-manage-supplements') && !document.getElementById('modal-manage-supplements').classList.contains('hidden')) {
+        this.renderManageSupplements();
+      }
     });
 
     // 대시보드 영양제 추가 버튼
@@ -26,7 +29,61 @@ class HPetDashboardManager {
         const modal = document.getElementById('modal-custom-supp');
         if (modal) {
           document.getElementById('custom-supp-name').value = ''; // 초기화
+          delete modal.dataset.editId; // 생성 모드
+          document.getElementById('modal-supp-title').textContent = '영양제 추가';
+          document.getElementById('btn-delete-supp').classList.add('hidden');
           modal.classList.remove('hidden');
+        }
+      });
+    }
+
+    // 전체 보기 버튼 (영양제 관리 모달 열기)
+    const btnViewAll = document.getElementById('btn-view-all');
+    if (btnViewAll) {
+      btnViewAll.addEventListener('click', () => {
+        this.renderManageSupplements();
+        document.getElementById('modal-manage-supplements').classList.remove('hidden');
+      });
+    }
+
+    // 영양제 관리 모달 닫기
+    const btnCloseManage = document.getElementById('btn-close-manage-supps');
+    if (btnCloseManage) {
+      btnCloseManage.addEventListener('click', () => {
+        document.getElementById('modal-manage-supplements').classList.add('hidden');
+      });
+    }
+
+    // 새 영양제 추가 버튼 (관리 모달 내)
+    const btnOpenAddSupp = document.getElementById('btn-open-add-supp');
+    if (btnOpenAddSupp) {
+      btnOpenAddSupp.addEventListener('click', () => {
+        document.getElementById('modal-manage-supplements').classList.add('hidden');
+        const modal = document.getElementById('modal-custom-supp');
+        if (modal) {
+          document.getElementById('custom-supp-name').value = '';
+          document.getElementById('custom-supp-time').value = '09:00 AM';
+          delete modal.dataset.editId;
+          document.getElementById('modal-supp-title').textContent = '새 영양제 등록';
+          document.getElementById('btn-delete-supp').classList.add('hidden');
+          modal.classList.remove('hidden');
+        }
+      });
+    }
+
+    const btnDeleteSupp = document.getElementById('btn-delete-supp');
+    if (btnDeleteSupp) {
+      btnDeleteSupp.addEventListener('click', () => {
+        const modal = document.getElementById('modal-custom-supp');
+        const idInput = modal.dataset.editId;
+        if (idInput && confirm('이 영양제를 삭제하시겠습니까?')) {
+          const state = window.hpetStore.state;
+          window.hpetStore.state.supplements = state.supplements.filter(s => s.id !== idInput);
+          window.hpetStore.saveState();
+          
+          modal.classList.add('hidden');
+          this.renderManageSupplements();
+          document.getElementById('modal-manage-supplements').classList.remove('hidden');
         }
       });
     }
@@ -88,89 +145,81 @@ class HPetDashboardManager {
       '루테인': 'Lu', '칼슘': 'Ca', '콜라겐': 'Co'
     };
 
-    // 아이콘 색상 순환
-    const colors = ['#66bb6a','#42a5f5','#ff7043','#ab47bc','#26a69a','#ec407a'];
+    // 아이콘 색상 클래스 순환 (새 디자인용)
+    const colors = ['yellow', 'blue', 'red', 'green', 'purple'];
+    const icons = ['fa-capsules', 'fa-tablets', 'fa-pills'];
 
-    this.missionContainer.innerHTML = state.supplements.map((supp, idx) => {
-      const abbr = abbrMap[supp.name] || supp.name.substring(0, 2);
-      const bgColor = colors[idx % colors.length];
+    // 대시보드 리스트 렌더링 (최대 3개 정도만 미리보기로 보여주거나 전체 보여주기)
+    this.missionContainer.innerHTML = state.supplements.slice(0, 3).map((supp, idx) => {
+      const colorCls = colors[idx % colors.length];
+      const iconCls = icons[idx % icons.length];
+      
       return `
-        <div class="mission-item ${supp.takenToday ? 'completed' : ''}">
-          <div class="mission-info">
-            <span class="mission-time" style="background:${bgColor}; color:white;">${abbr}</span>
-            <div>
-              <span class="mission-name">${supp.name}</span>
-              <span style="font-size:10px; color:#8fa08f; display:block;">${supp.time || ''}</span>
-            </div>
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center; position: relative;">
-            <button class="btn-check-auth ${supp.takenToday ? 'done' : ''}" data-id="${supp.id}">
-              ${supp.takenToday
-                ? '<i class="fa-solid fa-check"></i>'
-                : '<i class="fa-solid fa-camera"></i>'}
-            </button>
-            <button class="btn-supp-options" style="background:none; border:none; color:var(--text-mid); cursor:pointer; font-size: 16px; padding: 4px 8px;">
-              <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
-            <div class="dropdown-menu hidden">
-              <button class="dropdown-item btn-edit-supp" data-id="${supp.id}">수정</button>
-              <button class="dropdown-item danger btn-delete-supp" data-id="${supp.id}">삭제</button>
-            </div>
-          </div>
+        <div class="pill-item ${supp.takenToday ? 'taken' : ''}">
+          <i class="fa-solid ${iconCls} pill-icon ${colorCls}"></i>
+          <span class="pill-name">${supp.name}</span>
+          <span class="pill-time">${supp.time || ''}</span>
+          ${supp.takenToday
+            ? '<i class="fa-solid fa-circle-check check-icon text-green"></i>'
+            : '<i class="fa-regular fa-circle check-icon text-gray"></i>'
+          }
         </div>
       `;
     }).join('');
 
-    // 카메라 인증 이동
-    this.missionContainer.querySelectorAll('.btn-check-auth:not(.done)').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        window.hpetRouter.navigateTo('cameraAuth');
-      });
-    });
+    // 여기서 카드의 숫자 부분 업데이트
+    const takenCount = state.supplements.filter(s => s.takenToday).length;
+    const totalCount = state.supplements.length;
+    const fractionText = document.querySelector('.home-card.pill-card .fraction-text');
+    if (fractionText) {
+      fractionText.innerHTML = `<strong class="text-yellow">${takenCount}</strong> / ${totalCount}`;
+    }
+  }
 
-    // 더보기 메뉴 토글
-    this.missionContainer.querySelectorAll('.btn-supp-options').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        // 다른 열려있는 메뉴 닫기
-        document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
-        
-        const dropdown = e.currentTarget.nextElementSibling;
-        dropdown.classList.remove('hidden');
-        e.stopPropagation();
-      });
-    });
+  renderManageSupplements() {
+    const listContainer = document.getElementById('manage-supps-list');
+    if (!listContainer) return;
 
-    // 화면 아무 곳이나 누르면 드롭다운 닫기
-    document.addEventListener('click', () => {
-      document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.add('hidden'));
-    }, { once: true });
+    const state = window.hpetStore.state;
+    if (!state.supplements || state.supplements.length === 0) {
+      listContainer.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--text-mid);">등록된 영양제가 없습니다.</div>`;
+      return;
+    }
 
-    // 수정 버튼
-    this.missionContainer.querySelectorAll('.btn-edit-supp').forEach(btn => {
+    listContainer.innerHTML = state.supplements.map(supp => `
+      <div class="manage-supp-item">
+        <div class="manage-supp-info">
+          <span class="manage-supp-name">${supp.name}</span>
+          <span class="manage-supp-time">${supp.time || ''}</span>
+        </div>
+        <div style="position: relative;">
+          <button class="btn-more-options" data-id="${supp.id}">
+            <i class="fa-solid fa-ellipsis"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // ... 버튼(수정 모달 띄우기)
+    listContainer.querySelectorAll('.btn-more-options').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const suppId = e.currentTarget.dataset.id;
-        const targetSupp = window.hpetStore.state.supplements.find(s => s.id === suppId);
+        const targetSupp = state.supplements.find(s => s.id === suppId);
+        
+        document.getElementById('modal-manage-supplements').classList.add('hidden');
         const modal = document.getElementById('modal-custom-supp');
         
         if (targetSupp && modal) {
           modal.dataset.editId = suppId;
           document.getElementById('custom-supp-name').value = targetSupp.name;
           document.getElementById('custom-supp-time').value = targetSupp.time || '09:00 AM';
+          document.getElementById('modal-supp-title').textContent = '영양제 수정';
+          document.getElementById('btn-delete-supp').classList.remove('hidden');
           modal.classList.remove('hidden');
         }
       });
     });
 
-    // 삭제 버튼
-    this.missionContainer.querySelectorAll('.btn-delete-supp').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const suppId = e.currentTarget.dataset.id;
-        if (confirm('영양제를 삭제하시겠습니까?')) {
-          window.hpetStore.state.supplements = window.hpetStore.state.supplements.filter(s => s.id !== suppId);
-          window.hpetStore.saveState();
-        }
-      });
-    });
   }
 }
 
