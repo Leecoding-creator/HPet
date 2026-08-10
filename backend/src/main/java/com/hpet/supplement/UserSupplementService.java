@@ -36,10 +36,10 @@ public class UserSupplementService {
     private final DoseNotificationRepository doseNotificationRepository;
 
     public UserSupplementService(SupplementRepository supplementRepository,
-                                  UserSupplementRepository userSupplementRepository,
-                                  CharacterAssignmentService characterAssignmentService,
-                                  DoseRecordRepository doseRecordRepository,
-                                  DoseNotificationRepository doseNotificationRepository) {
+                                 UserSupplementRepository userSupplementRepository,
+                                 CharacterAssignmentService characterAssignmentService,
+                                 DoseRecordRepository doseRecordRepository,
+                                 DoseNotificationRepository doseNotificationRepository) {
         this.supplementRepository = supplementRepository;
         this.userSupplementRepository = userSupplementRepository;
         this.characterAssignmentService = characterAssignmentService;

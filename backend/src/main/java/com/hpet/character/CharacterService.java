@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Phase 2 - 2-6, 2-7. 캐릭터 조회 + 코스튬 착용/해제.
@@ -36,9 +37,19 @@ public class CharacterService {
 
     @Transactional(readOnly = true)
     public CharacterResponse getMyCharacter(Long userId) {
-        UserCharacter userCharacter = userCharacterRepository.findByUserId(userId)
-                .orElseThrow(CharacterNotAssignedException::new);
+        return findMyCharacter(userId).orElseThrow(CharacterNotAssignedException::new);
+    }
 
+    /**
+     * 홈 대시보드처럼 캐릭터 미배정 상태도 정상 흐름으로 다뤄야 하는 호출부를 위한 조회.
+     * getMyCharacter()와 달리 미배정이어도 예외를 던지지 않고 Optional.empty()를 반환한다.
+     */
+    @Transactional(readOnly = true)
+    public Optional<CharacterResponse> findMyCharacter(Long userId) {
+        return userCharacterRepository.findByUserId(userId).map(this::toResponse);
+    }
+
+    private CharacterResponse toResponse(UserCharacter userCharacter) {
         GrowthStage stage = userCharacter.getStage();
         List<String> equippedItemNames = userCharacterItemRepository
                 .findByUserCharacterIdAndEquippedTrue(userCharacter.getId()).stream()

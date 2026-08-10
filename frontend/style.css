@@ -1,0 +1,2118 @@
+/* ==========================================================================
+   HPet — Pill & Pose 스타일 UI Design System
+   크림 베이지 배경 + 세이지 그린 + 골든 옐로우
+   따뜻하고 미니멀한 웰니스 앱 감성
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Press+Start+2P&display=swap');
+
+:root {
+  /* ── Pill & Pose 스타일 따뜻한 팔레트 ── */
+  --bg-main: #fdf4ec;              /* 따뜻한 피치/베이지 배경 */
+  --bg-card: #ffffff;
+  --bg-header: #2d3b2d;            /* 다크 포레스트 그린 (프레임/헤더) */
+  --bg-header-light: #3d4f3d;
+
+  --primary: #7ab88a;              /* 세이지 그린 (레퍼런스 일치) */
+  --primary-light: #a8d5b8;
+  --primary-pale: #e8f0eb;
+  --primary-dark: #5a9e6a;
+
+  --accent-gold: #e8c855;          /* 골든 옐로우 (카카오/강조) */
+  --accent-orange: #f0a654;        /* 보상/강조 */
+  --accent-red: #d4625e;           /* 경고/하트 */
+  --accent-blue: #6ba3c7;          /* 자세 게이지 */
+
+  --text-dark: #2d3b2d;
+  --text-mid: #5a6b5a;
+  --text-light: #8fa08f;
+  --border: #a5c8a5;               /* 진한 그린 보더 (레퍼런스 인풋 스타일) */
+  --border-light: #c5d8c5;
+
+  /* ── Typography ── */
+  --font-main: 'Pretendard Variable', 'Pretendard', 'Outfit', -apple-system, 'Segoe UI', sans-serif;
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-heading: 'Pretendard Variable', 'Outfit', -apple-system, sans-serif;
+
+  /* ── Radius (Pill & Pose: 더 둥근 코너) ── */
+  --radius-xl: 28px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  /* ── 프레임 색상 ── */
+  --frame-color: #2d3b2d;
+}
+
+/* 옷장 아이템 그리드 스타일 */
+.closet-item {
+  background: var(--bg-card);
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closet-item:hover {
+  border-color: var(--primary);
+  background: #f0f7f0;
+}
+
+.closet-item.selected {
+  border-color: var(--primary);
+  background: #e8f5e9;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.closet-item-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+}
+
+.closet-item-name {
+  font-size: 12px;
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   다크 모드 변수 재정의
+   ========================================================================== */
+body[data-theme="dark"] {
+  --bg-main: #1a1f1a;
+  --bg-card: #242e24;
+  --bg-header: #1a231a;
+  --primary: #7bbe8d;
+  --primary-pale: #2a3a2a;
+  --primary-dark: #5fa86f;
+
+  --text-dark: #f0f7f0;
+  --text-mid: #a8d5b8;
+  --text-light: #7bbe8d;
+  --border: #3a4a3a;
+  --border-light: #2d3b2d;
+  --frame-color: #111;
+}
+
+body[data-theme="dark"] .character-name,
+body[data-theme="dark"] .level-text,
+body[data-theme="dark"] .progress-text,
+body[data-theme="dark"] .stat-label,
+body[data-theme="dark"] .stat-num {
+  color: #ffffff;
+  text-shadow: none;
+  font-weight: 800;
+}
+
+body[data-theme="dark"] .mobile-frame {
+  background: #1a1f1a;
+  border-color: #333;
+}
+
+body[data-theme="dark"] #view-dashboard {
+  background: linear-gradient(180deg, #1a1f1a 0%, #111511 100%);
+}
+
+body[data-theme="dark"] .home-bg-layer {
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.03) 0%, transparent 60%),
+              linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+body[data-theme="dark"] .glass-panel,
+body[data-theme="dark"] .home-card,
+body[data-theme="dark"] .mission-section,
+body[data-theme="dark"] .action-card,
+body[data-theme="dark"] .gauge-item,
+body[data-theme="dark"] .pet-speech-bubble,
+body[data-theme="dark"] .modal-card,
+body[data-theme="dark"] .bottom-nav {
+  background: var(--bg-card) !important;
+  border-color: var(--border);
+}
+
+body[data-theme="dark"] .pill-item {
+  background: #1a231a !important;
+}
+body[data-theme="dark"] .pill-item.taken {
+  background: #2a3a2a !important;
+  border-color: var(--border);
+}
+
+body[data-theme="dark"] .input-group input {
+  background: #2a3a2a;
+  color: #e8f0eb;
+  border-color: var(--border);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-main);
+  background: #d4ddd4; /* 프레임 주변 배경 - 민트 그린 톤 */
+  color: var(--text-dark);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+/* ==========================================================================
+   Mobile App Frame — Clean Modern Style
+   ========================================================================== */
+.mobile-frame {
+  width: 100%;
+  max-width: 400px;
+  height: 860px;
+  max-height: 95vh;
+  background: var(--bg-main);
+  border-radius: 44px;
+  border: 12px solid #1a1a1a;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 상단 바: iPhone 스타일 시계 + 앱이름 */
+.frame-top-bar {
+  height: 44px;
+  background: var(--bg-main);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  position: relative;
+  z-index: 10;
+}
+
+/* 기존 speaker-hole, camera-lens → 숨김 (새 상단 바로 대체) */
+.speaker-hole,
+.camera-lens {
+  display: none;
+}
+
+/* 시계 표시 — 사용자 요청으로 제거 */
+.frame-top-bar::before {
+  content: '';
+}
+
+/* 앱 이름 */
+.frame-top-bar::after {
+  content: 'HPet';
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  letter-spacing: 0.5px;
+}
+
+/* 하단 물리 버튼 → 숨김 처리 (Pill & Pose: 클린 iPhone 스타일) */
+.frame-bottom-buttons {
+  display: none;
+}
+
+.tamagotchi-btn {
+  display: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-actions button { flex: 1; }
+
+.perm-modal-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+/* 영양제 관리 리스트 모달 스타일 */
+.manage-supps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 10px;
+  padding-right: 4px;
+}
+.manage-supps-list::-webkit-scrollbar { width: 4px; }
+.manage-supps-list::-webkit-scrollbar-track { background: transparent; }
+.manage-supps-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.manage-supp-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fbfbfb;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+}
+
+.manage-supp-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.manage-supp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.manage-supp-time {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.btn-more-options {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-light);
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.btn-more-options:hover {
+  color: var(--text-dark);
+}
+
+/* ==========================================================================
+   Screen Container
+   ========================================================================== */
+.screen-container {
+  flex: 1;
+  background: var(--bg-main);
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-container::-webkit-scrollbar { width: 3px; }
+.screen-container::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 3px; }
+
+/* ==========================================================================
+   App Header — 다크 포레스트 그린 라운드 헤더
+   ========================================================================== */
+.app-header {
+  padding: 12px 18px;
+  background: var(--bg-main);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.user-info { display: flex; align-items: center; gap: 10px; }
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--primary-pale);
+  color: var(--primary-dark);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  border: 2px solid var(--primary-light);
+}
+
+.user-meta { display: flex; flex-direction: column; }
+.user-name { font-weight: 700; font-size: 14px; color: var(--text-dark); }
+
+.streak-badge {
+  font-size: 11px;
+  color: var(--text-mid);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.streak-badge i { color: var(--accent-orange); }
+
+.icon-btn {
+  background: var(--primary-pale);
+  border: 1.5px solid var(--border);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--text-mid);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* ==========================================================================
+   View Sections (화면 전환)
+   ========================================================================== */
+.view-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  overflow: hidden;
+  animation: fadeSlideIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.view-section.hidden, .hidden { display: none !important; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ==========================================================================
+   VIEW 1: 로그인 / 회원가입 — Pill & Pose 스타일
+   반가워요! 헤딩 + 크림 배경 + 소셜 로그인
+   ========================================================================== */
+.splash-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0;
+  padding: 8px 4px 0;
+  background: var(--bg-main);
+}
+
+.logo-box {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+/* 뒤로가기 스타일 아이콘 (Pill & Pose: 좌상단 □ 아이콘) */
+.tamagotchi-icon {
+  font-size: 28px;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  display: block;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  text-align: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+/* 타이틀: "반가워요! 계정을 만들어볼까요" 스타일 */
+.logo-title {
+  font-family: var(--font-main);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+.logo-tagline {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+/* 카드 패널 — 깔끔한 화이트 라운드 카드 */
+.glass-panel {
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+  width: 100%;
+}
+
+/* Auth 탭 → Pill & Pose 스타일 (숨김, 전환 링크로 대체) */
+.auth-tabs {
+  display: flex;
+  background: var(--primary-pale);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 18px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(107, 171, 123, 0.35);
+}
+
+/* ── 폼 라벨 ── */
+.auth-form .form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+/* ── 인풋 그룹 — Pill & Pose: 따뜻한 보더 + 둥근 코너 ── */
+.input-group {
+  position: relative;
+  margin-bottom: 8px; /* 간격 줄임 (유효성 메시지용) */
+}
+
+/* ── 유효성 검사 에러 텍스트 ── */
+.validation-msg {
+  color: var(--accent-red);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 13px 44px 13px 16px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border);
+  outline: none;
+  font-size: 14px;
+  font-family: var(--font-main);
+  color: var(--text-dark);
+  background: var(--bg-card);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 아이콘 있는 인풋은 왼쪽 패딩 추가 */
+.input-group .input-icon ~ input {
+  padding-left: 40px;
+}
+
+.input-group input::placeholder {
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.input-group input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(107, 171, 123, 0.12);
+}
+
+/* 비밀번호 토글 버튼 */
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: var(--text-mid);
+}
+
+.form-actions { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+
+.text-link {
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.text-link:hover {
+  color: var(--primary-dark);
+}
+
+/* ── Buttons — 세이지 그린 + 부드러운 그림자 ── */
+.btn {
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-family: var(--font-main);
+}
+
+.btn-block { width: 100%; }
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 16px rgba(107, 171, 123, 0.3);
+}
+.btn-primary.glow:hover {
+  box-shadow: 0 4px 16px rgba(107, 171, 123, 0.4);
+}
+
+/* ── 하드 섀도우 (레퍼런스 스타일) ── */
+.hard-shadow {
+  border: 2px solid var(--text-dark);
+  box-shadow: 2px 4px 0px var(--text-dark);
+  color: var(--text-dark);
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.hard-shadow:active {
+  transform: translate(2px, 4px);
+  box-shadow: 0px 0px 0px var(--text-dark);
+}
+
+.center-actions {
+  justify-content: center;
+  margin-top: 16px;
+}
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(107, 171, 123, 0.35);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: var(--primary-pale);
+  color: var(--primary-dark);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover { background: var(--primary-light); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-dark);
+  border: 1.5px solid var(--border);
+}
+.btn-outline:hover {
+  background: var(--primary-pale);
+}
+
+.glow { box-shadow: 0 4px 20px rgba(107, 171, 123, 0.3); }
+
+/* ── 소셜 로그인 버튼 (Pill & Pose: 원형 G, K, Apple) ── */
+.social-divider {
+  display: flex;
+  align-items: center;
+  margin: 18px 0;
+  gap: 12px;
+}
+
+.social-divider::before,
+.social-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.social-divider span {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.social-login-group {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.social-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Google 버튼 */
+.social-btn.google {
+  background: white;
+  color: var(--text-mid);
+}
+
+/* Kakao 버튼 */
+.social-btn.kakao {
+  background: var(--accent-gold);
+  color: var(--text-dark);
+  border-color: var(--accent-gold);
+}
+
+/* Apple 버튼 */
+.social-btn.apple {
+  background: var(--text-dark);
+  color: white;
+  border-color: var(--text-dark);
+}
+
+/* 하단 전환 링크 */
+.auth-switch-link {
+  text-align: center;
+  margin-top: 32px;
+  font-size: 13px;
+  color: var(--text-mid);
+}
+
+.tab-btn-switch {
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 4px;
+}
+
+/* ── 로그인 상태 유지 토글 ── */
+.remember-me-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.remember-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.remember-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-card);
+  border: 2px solid var(--text-dark);
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-dark);
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--primary);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* 뒤로가기 버튼 */
+.retro-back-btn {
+  background: white;
+  border: 2px solid var(--text-dark);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-dark);
+  margin-bottom: 16px;
+  box-shadow: 2px 2px 0px var(--text-dark);
+}
+.retro-back-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px var(--text-dark);
+}
+
+/* ==========================================================================
+   VIEW 2: 건강 프로필 Setup — 도트 프로그래스 인디케이터
+   ========================================================================== */
+.setup-container { display: flex; flex-direction: column; height: 100%; }
+
+/* 도트 프로그래스 인디케이터 (Pill & Pose 스타일) */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  padding: 8px 0;
+  gap: 8px;
+}
+
+.step {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  color: transparent;
+  font-size: 0;
+  display: block;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.step.active {
+  width: 28px;
+  border-radius: 5px;
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(107, 171, 123, 0.3);
+}
+
+.step-line {
+  display: none; /* 도트 스타일에서는 라인 숨김 */
+}
+
+.setup-step-content h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.step-desc { color: var(--text-mid); font-size: 13px; margin-bottom: 18px; line-height: 1.4; }
+
+.form-group { margin-bottom: 18px; }
+
+.form-group label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+}
+
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.chip {
+  padding: 10px 16px;
+  border-radius: 22px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-mid);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  border-color: var(--primary-light);
+  background: var(--primary-pale);
+}
+
+.chip.active {
+  background: var(--primary-pale);
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* AI 추천 카드 */
+.recommend-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+.recommend-card {
+  padding: 14px;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.recommend-card:hover {
+  border-color: var(--primary-light);
+}
+
+.recommend-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-pale);
+}
+
+/* 영양제 원형 아이콘 */
+.supp-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--primary-pale);
+  color: var(--primary-dark);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.supp-info { flex: 1; }
+.supp-name { font-weight: 700; font-size: 14px; color: var(--text-dark); }
+.supp-reason { font-size: 12px; color: var(--text-mid); margin-top: 2px; }
+
+.action-row { display: flex; gap: 8px; }
+
+/* 펫 선택 그리드 */
+.pet-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pet-option-card {
+  background: white;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pet-option-card:hover {
+  border-color: var(--primary-light);
+}
+
+.pet-option-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-pale);
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(107, 171, 123, 0.15);
+}
+
+.pet-preview-img { font-size: 44px; margin-bottom: 6px; }
+
+/* ==========================================================================
+   VIEW 3: 메인 대시보드 (Home Screen)
+   ========================================================================== */
+#view-dashboard {
+  padding: 0; /* 배경을 전체 화면으로 덮기 위해 패딩 제거 */
+  position: relative;
+  background: linear-gradient(180deg, #fdf4ec 0%, #f4e8d8 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 홈 화면 장식용 배경 레이어 */
+.home-bg-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  /* 목업과 비슷한 따뜻한 빛이 들어오는 느낌을 주기 위한 그라데이션 및 원형 효과 */
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.7) 0%, transparent 60%),
+              linear-gradient(to bottom, transparent 60%, rgba(240, 230, 210, 0.5) 100%);
+  z-index: 0;
+}
+
+/* 상단 헤더 영역 */
+.home-header {
+  position: relative;
+  z-index: 10;
+  padding: 16px 20px 4px;
+}
+
+.home-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.character-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.text-primary { color: var(--primary); }
+.text-yellow { color: #f2c040; }
+.text-green { color: var(--primary); }
+.text-gray { color: var(--border); }
+
+.closet-btn {
+  background: #fdf3e6;
+  border: 1px solid #ebd3bb;
+  color: #7b5840;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 16px;
+  box-shadow: 0 4px 10px rgba(123, 88, 64, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.level-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-text {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--primary-dark);
+}
+
+.progress-bar-container {
+  flex: 1;
+  max-width: 160px;
+  height: 10px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 5px;
+}
+
+.progress-text {
+  font-size: 14px;
+  color: var(--text-mid);
+}
+
+/* 중앙 캐릭터 영역 */
+.home-character-area {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.speech-bubble {
+  position: absolute;
+  top: 10%;
+  left: 8%;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 20px 20px 20px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  z-index: 12;
+}
+
+.character-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+/* 임시 캐릭터 그림자 효과 */
+.character-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 200px;
+  height: 24px;
+  background: rgba(85, 110, 60, 0.15);
+  border-radius: 50%;
+  z-index: 0;
+  filter: blur(4px);
+}
+
+.main-character-img {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  z-index: 1;
+}
+
+.bounce-animation {
+  animation: floatBounce 3s ease-in-out infinite;
+}
+
+@keyframes floatBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* 하단 카드 영역 */
+.home-cards-container {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.home-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 14px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-header h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fraction-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mid);
+}
+
+/* Pill Card */
+.pill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex: 1;
+}
+
+.pill-item {
+  display: flex;
+  align-items: center;
+  background: #fbfbfb;
+  padding: 6px 10px;
+  border-radius: 10px;
+  gap: 6px;
+}
+
+.pill-item.taken {
+  background: white;
+  border: 1px solid var(--border-light);
+}
+
+.pill-icon {
+  font-size: 14px;
+}
+.pill-icon.yellow { color: #f2c040; }
+.pill-icon.blue { color: #6ba3c7; }
+.pill-icon.red { color: #d4625e; }
+
+.pill-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dark);
+  flex: 1;
+}
+
+.pill-time {
+  font-size: 10px;
+  color: var(--text-mid);
+}
+
+.check-icon {
+  font-size: 14px;
+}
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-yellow {
+  background: #ffd54f;
+  color: #7b5b00;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(255, 213, 79, 0.4);
+}
+.btn-yellow:hover { background: #f2c040; }
+
+.btn-light-green {
+  background: #f0f5f1;
+  color: var(--primary-dark);
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+.btn-light-green:hover { background: #e0ece3; }
+
+/* Posture Card */
+.posture-character-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 8px;
+  background: radial-gradient(circle, rgba(255,255,255,1) 30%, transparent 70%);
+}
+
+.posture-character-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.posture-text {
+  font-size: 11px;
+  color: var(--text-mid);
+  text-align: center;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.btn-green {
+  background: var(--primary-dark);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(90, 158, 106, 0.3);
+}
+.btn-green:hover { background: #488255; }
+
+
+/* ==========================================================================
+   VIEW 4: 카메라 인증 & VIEW 5: 자세 미니게임
+   ========================================================================== */
+.camera-container, .game-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.cam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cam-header h3 { font-size: 16px; font-weight: 700; }
+
+.btn-back {
+  background: var(--primary-pale);
+  border: 1.5px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--primary-dark);
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: var(--primary-light);
+}
+
+.viewfinder-box, .game-canvas-area {
+  flex: 1;
+  background: var(--frame-color);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.webcam-video { width: 100%; height: 100%; object-fit: cover; }
+
+.viewfinder-overlay {
+  position: absolute;
+  inset: 16px;
+  border: 2px dashed rgba(255,255,255,0.35);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 16px;
+}
+
+.guide-text {
+  color: white;
+  font-size: 12px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.cam-controls { padding: 16px; display: flex; justify-content: center; }
+
+.shutter-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: white;
+  border: 4px solid var(--primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shutter-btn:hover {
+  border-color: var(--primary-dark);
+}
+
+.shutter-inner {
+  width: 46px;
+  height: 46px;
+  background: var(--primary);
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+/* AI Scan overlay */
+.ai-scanning-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.scanner-line {
+  width: 75%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: scanLine 1.4s ease-in-out infinite;
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(107, 171, 123, 0.5);
+}
+
+@keyframes scanLine {
+  0% { transform: translateY(-70px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(70px); opacity: 0; }
+}
+
+.ai-badge {
+  margin-top: 16px;
+  background: rgba(107, 171, 123, 0.9);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pulse { animation: pulseGlow 1.2s ease-in-out infinite; }
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── 드롭다운 메뉴 (옵션) ── */
+.dropdown-menu {
+  position: absolute;
+  right: 12px;
+  top: 40px;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+  min-width: 100px;
+}
+.dropdown-menu.hidden {
+  display: none !important;
+}
+.dropdown-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+  transition: background 0.2s;
+}
+.dropdown-item:hover {
+  background: var(--primary-pale);
+}
+.dropdown-item.danger {
+  color: var(--accent-red);
+}
+body[data-theme="dark"] .dropdown-menu {
+  background: var(--bg-card);
+}
+body[data-theme="dark"] .dropdown-item:hover {
+  background: var(--primary-pale);
+}
+
+.demo-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--frame-color);
+  z-index: 1;
+  border-radius: var(--radius-lg);
+}
+
+/* ── 자세 미니게임 UI ── */
+.posture-status-box {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+}
+
+.status-indicator {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-indicator.good { background: rgba(107, 171, 123, 0.9); color: white; }
+.status-indicator.bad { background: rgba(212, 98, 94, 0.9); color: white; }
+
+.timer-display {
+  font-family: var(--font-pixel);
+  font-size: 24px;
+  color: white;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+  transition: color 0.3s;
+}
+
+.turtle-warning-banner {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(240, 166, 84, 0.95);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+  animation: shakeWarning 0.4s ease-in-out;
+}
+
+@keyframes shakeWarning {
+  0%, 100% { transform: translateX(-50%) rotate(0); }
+  25% { transform: translateX(-50%) rotate(-2deg); }
+  75% { transform: translateX(-50%) rotate(2deg); }
+}
+
+.game-instructions { padding: 14px 0; }
+
+.game-instructions p {
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   VIEW 6: 캘린더 & 히스토리
+   ========================================================================== */
+.history-container h2 { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+
+.calendar-card { margin-bottom: 14px; }
+
+.cal-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cal-month-header h3 { font-weight: 700; }
+
+.cal-month-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-dark);
+  padding: 6px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.cal-header {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-light);
+  padding: 3px 0;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  gap: 1px;
+}
+
+.cal-day:hover { background: var(--primary-pale); }
+.cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-day.today {
+  border-color: var(--primary);
+  background: var(--primary-pale);
+  box-shadow: 0 0 0 2px rgba(107, 171, 123, 0.2);
+}
+.cal-day.checked { background: var(--primary-pale); }
+.cal-day.turtle { border-color: var(--accent-orange); }
+
+.day-num { font-size: 10px; }
+.day-badge { font-size: 7px; line-height: 1; }
+
+.stats-card h3 { font-size: 14px; margin-bottom: 12px; color: var(--text-dark); font-weight: 700; }
+
+.stats-summary { display: flex; gap: 10px; }
+
+.stat-box {
+  flex: 1;
+  background: var(--primary-pale);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  text-align: center;
+}
+
+.stat-num { display: block; font-size: 22px; font-weight: 800; color: var(--primary-dark); margin-bottom: 3px; }
+.stat-label { font-size: 11px; color: var(--text-mid); font-weight: 600; }
+
+/* ==========================================================================
+   Bottom Navigation — 깔끔한 하단 탭 바
+   ========================================================================== */
+.bottom-nav {
+  height: 64px;
+  background: white;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 8px 20px;
+}
+
+.nav-item i { font-size: 20px; margin-bottom: 2px; }
+
+.nav-item.active { color: var(--primary); }
+
+/* ==========================================================================
+   Modals — iOS 네이티브 스타일
+   ========================================================================== */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 59, 45, 0.5);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.modal-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  padding: 28px 24px;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modal-card h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.modal-sub { font-size: 13px; color: var(--text-mid); margin-top: 4px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn { flex: 1; }
+.modal-card p { white-space: pre-line; font-size: 13px; }
+
+.reward-sparkles { font-size: 24px; margin-bottom: 6px; }
+.reward-icon { font-size: 48px; margin: 12px 0; }
+
+/* ── 알림 권한 모달 (Pill & Pose: 🔔 + 허용/허용 안 함) ── */
+.notification-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--primary-pale);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 16px;
+  font-size: 28px;
+}
+
+.perm-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.perm-modal-actions .btn {
+  width: 100%;
+}
+
+/* 기존 권한 리스트 (체크박스 스타일 유지) */
+.perm-list { display: flex; flex-direction: column; gap: 10px; margin: 14px 0; }
+
+.perm-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--primary-pale);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.perm-icon { font-size: 16px; color: var(--primary); width: 22px; text-align: center; }
+
+.perm-item div { flex: 1; display: flex; flex-direction: column; }
+.perm-item strong { font-size: 12px; color: var(--text-dark); }
+.perm-item span { font-size: 10px; color: var(--text-mid); }
+
+/* 유틸리티 */
+.empty-mission { text-align: center; padding: 18px; color: var(--text-light); font-size: 12px; }
+.text-primary { color: var(--primary); }
+
+/* ==========================================================================
+   VIEW 7: 프로필 및 설정
+   ========================================================================== */
+.profile-container h2 { font-size: 20px; font-weight: 800; margin-bottom: 16px; color: var(--text-dark); }
+
+.profile-header-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.user-avatar.large {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  background: var(--primary-pale);
+  color: var(--primary-dark);
+  border: 2px solid var(--primary-light);
+}
+
+.profile-info-text { flex: 1; }
+.profile-info-text h3 { font-size: 16px; color: var(--text-dark); margin-bottom: 4px; font-weight: 700; }
+.profile-info-text p { font-size: 13px; color: var(--text-mid); }
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+.settings-group {
+  margin-bottom: 20px;
+}
+
+.settings-title {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+  padding-left: 4px;
+  font-weight: 600;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  padding: 14px 16px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 6px;
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+
+.setting-item:hover {
+  background: var(--primary-pale);
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.setting-label i { font-size: 16px; width: 20px; text-align: center; color: var(--text-mid); }
+
+.text-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.text-danger { color: var(--accent-red); }
+.text-danger i { color: var(--accent-red); }
+
+/* Toggle Switch — 세이지 그린 */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 26px;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--border);
+  transition: .3s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+input:checked + .slider { background-color: var(--primary); }
+input:checked + .slider:before { transform: translateX(20px); }
+body[data-theme="dark"] .slider { background-color: #555; }
+
+/* 다크모드 전용 해/달 스위치 */
+.theme-slider:before {
+  content: "☀️";
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 11px;
+}
+
+input:checked + .theme-slider:before {
+  content: "🌙";
+  transform: translateX(20px) rotate(360deg);
+  background-color: #2d3b2d;
+}
+
+/* ==========================================================================
+   Pop-in 애니메이션 (모달 등장)
+   ========================================================================== */
+.pop-in {
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ==========================================================================
+   History (기록 화면) 캘린더 및 타임라인 스타일
+   ========================================================================== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cal-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 6px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+
+.cal-day:hover { background: #f0f0f0; }
+.cal-day.today { background: var(--primary-pale); color: var(--primary-dark); font-weight: 800; }
+.cal-day.empty { pointer-events: none; background: transparent; }
+
+.cal-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.dot-supp { background: var(--primary); }
+.dot-turtle { background: var(--accent-red); }
+
+/* 바텀 시트 타임라인 애니메이션 */
+.pop-up {
+  animation: popUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes popUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* 타임라인 아이템 */
+.timeline-item {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: -20px;
+  left: 20px;
+  width: 2px;
+  background: var(--border-light);
+}
+.timeline-item:last-child::before { display: none; }
+
+.timeline-time {
+  width: 50px;
+  font-size: 12px;
+  color: var(--text-mid);
+  font-weight: 600;
+  text-align: right;
+  padding-top: 4px;
+}
+
+.timeline-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-main);
+  z-index: 1;
+  font-size: 16px;
+}
+.timeline-icon.supp { background: #e8f5e9; color: var(--primary); }
+.timeline-icon.turtle { background: #ffebee; color: var(--accent-red); }
+
+.timeline-content {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.timeline-title { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+.timeline-desc { font-size: 12px; color: var(--text-mid); }
+
+.timeline-content .btn-more-options {
+  font-size: 18px;
+  color: var(--text-mid);
+  padding: 4px 8px;
+  margin: -4px -8px 0 0; /* Align with top right */
+}
+.timeline-content .btn-more-options:hover {
+  color: var(--text-dark);
+}
+
+/* ==========================================================================
+   말풍선 (Speech Bubble)
+   ========================================================================== */
+.speech-bubble {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-dark);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: var(--bg-card) transparent transparent transparent;
+}
+
+/* ==========================================================================
+   Animations (Effects)
+   ========================================================================== */
+.bounce-animation {
+  animation: bounce 2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.happy-bounce {
+  animation: happyBounce 0.4s ease-in-out 2;
+}
+
+@keyframes happyBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.05); }
+}
+
+/* 플로팅 파티클 (하트, 포션 이펙트) */
+.floating-particle {
+  position: absolute;
+  pointer-events: none;
+  font-size: 32px;
+  animation: floatUp 1.2s ease-out forwards;
+  z-index: 20;
+}
+
+.heart-particle {
+  color: #ff4d4f;
+}
+
+.potion-particle {
+  font-size: 40px;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(1.2);
+  }
+}
