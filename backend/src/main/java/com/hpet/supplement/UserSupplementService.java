@@ -1,7 +1,11 @@
 package com.hpet.supplement;
 
 import com.hpet.character.CharacterAssignmentService;
+import com.hpet.common.exception.SupplementInUseException;
 import com.hpet.common.exception.SupplementNotFoundException;
+import com.hpet.common.exception.UserSupplementRegistrationNotFoundException;
+import com.hpet.domain.dose.DoseRecordRepository;
+import com.hpet.domain.notification.DoseNotificationRepository;
 import com.hpet.domain.supplement.Supplement;
 import com.hpet.domain.supplement.SupplementRepository;
 import com.hpet.domain.supplement.UserSupplement;
@@ -16,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Phase 2 - 2-3. 사용자 영양제 등록.
+ * Phase 2 - 2-3 / Phase 5 - 5-9. 사용자 영양제 등록 + 삭제(CRUD 정리).
  * 등록 직후, 아직 캐릭터가 없는 사용자라면 CharacterAssignmentService로 배정을 시도한다
  * (회의 1-2 확정 로직: 매핑되는 영양제가 있어야 배정됨).
  */
@@ -28,13 +32,19 @@ public class UserSupplementService {
     private final SupplementRepository supplementRepository;
     private final UserSupplementRepository userSupplementRepository;
     private final CharacterAssignmentService characterAssignmentService;
+    private final DoseRecordRepository doseRecordRepository;
+    private final DoseNotificationRepository doseNotificationRepository;
 
     public UserSupplementService(SupplementRepository supplementRepository,
-                                  UserSupplementRepository userSupplementRepository,
-                                  CharacterAssignmentService characterAssignmentService) {
+                                 UserSupplementRepository userSupplementRepository,
+                                 CharacterAssignmentService characterAssignmentService,
+                                 DoseRecordRepository doseRecordRepository,
+                                 DoseNotificationRepository doseNotificationRepository) {
         this.supplementRepository = supplementRepository;
         this.userSupplementRepository = userSupplementRepository;
         this.characterAssignmentService = characterAssignmentService;
+        this.doseRecordRepository = doseRecordRepository;
+        this.doseNotificationRepository = doseNotificationRepository;
     }
 
     @Transactional
@@ -62,8 +72,35 @@ public class UserSupplementService {
     @Transactional(readOnly = true)
     public List<UserSupplementResponse> getMyList(Long userId) {
         return userSupplementRepository.findByUserId(userId).stream()
-                .map(us -> new UserSupplementResponse(
-                        us.getId(), us.getSupplement().getId(), us.getSupplement().getName(), us.getRegisteredAt()))
+                .map(this::toResponse)
                 .toList();
+    }
+
+    /**
+     * Phase 5 - 5-9. 영양제 등록 취소. 관련 복용기록(DoseRecord)이나 알림(DoseNotification)이
+     * 이미 있으면 무작정 지우지 않고 막는다 (히스토리 보존 + FK 제약 위반 방지).
+     */
+    @Transactional
+    public void unregister(Long userId, Long userSupplementId) {
+        UserSupplement userSupplement = userSupplementRepository.findById(userSupplementId)
+                .orElseThrow(() -> new UserSupplementRegistrationNotFoundException(userSupplementId));
+
+        if (!userSupplement.getUserId().equals(userId)) {
+            throw new UserSupplementRegistrationNotFoundException(userSupplementId);
+        }
+
+        boolean hasDoseHistory = doseRecordRepository.existsByUserSupplementId(userSupplementId);
+        boolean hasNotification = doseNotificationRepository.existsByUserSupplementId(userSupplementId);
+        if (hasDoseHistory || hasNotification) {
+            throw new SupplementInUseException();
+        }
+
+        userSupplementRepository.delete(userSupplement);
+        log.info("Supplement unregistered: userId={}, userSupplementId={}", userId, userSupplementId);
+    }
+
+    private UserSupplementResponse toResponse(UserSupplement us) {
+        return new UserSupplementResponse(
+                us.getId(), us.getSupplement().getId(), us.getSupplement().getName(), us.getRegisteredAt());
     }
 }
