@@ -146,6 +146,14 @@ class HPetPostureGame {
         window.hpetCharacter.setTurtleNeckAlert(true);
       }
 
+      // 서버로 이벤트 전송
+      const localTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 19);
+      window.hpetApi.sendPostureEvents({
+        detectedAt: localTime,
+        angleDeg: 45, // 임의의 각도
+        durationMin: 1
+      }).catch(e => console.warn("자세 이벤트 전송 실패:", e));
+
       // 2초 뒤 경고 배너 자동 숨김
       setTimeout(() => {
         if (turtleBanner) turtleBanner.classList.add('hidden');

@@ -56,7 +56,41 @@ class HPetHistoryManager {
     }
   }
 
-  render() {
+  async render() {
+    const yyyy = this.currentYear;
+    const mm = String(this.currentMonth + 1).padStart(2, '0');
+    const firstDayStr = `${yyyy}-${mm}-01`;
+
+    try {
+      // API에서 해당 월 기록 조회 (startDate를 yyyy-mm-01로 사용, 실제론 서버가 한 달치 줄 수 있게 처리됨)
+      // 백엔드는 startDate~endDate를 받지만, 여기서는 간단히 month 파라미터를 넘기는 것으로 api.js에 구현됨. 
+      // api.js getDoseRecords(month)는 /dose-records?month=yyyy-mm 이므로 그에 맞게 전달
+      const doseRecords = await window.hpetApi.getDoseRecords(`${yyyy}-${mm}`);
+      const postureSummary = await window.hpetApi.getPostureSummary(`${yyyy}-${mm}`);
+
+      const historyMap = {};
+
+      if (doseRecords) {
+        doseRecords.forEach(d => {
+          const date = d.doseDate;
+          if (!historyMap[date]) historyMap[date] = {};
+          historyMap[date].supplements = true; // 만약 여러건이면 어떻게 할지는 기획에 따라, 여기선 하나라도 먹으면 true
+        });
+      }
+
+      if (postureSummary) {
+        postureSummary.forEach(p => {
+          const date = p.date;
+          if (!historyMap[date]) historyMap[date] = {};
+          historyMap[date].turtleCount = p.count;
+        });
+      }
+
+      window.hpetStore.state.history = historyMap;
+    } catch(err) {
+      console.warn("히스토리 내역을 가져오는데 실패했습니다.", err);
+    }
+
     this.renderCalendar();
     this.renderStats();
   }

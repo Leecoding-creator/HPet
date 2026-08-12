@@ -88,50 +88,57 @@ class HPetSupplementAuth {
     box.appendChild(placeholder);
   }
 
-  // ── 사진 캡처 & AI 분석 시뮬레이션 ──
-  captureAndAnalyze() {
+  // ── 사진 캡처 & AI 분석 API 통신 ──
+  async captureAndAnalyze() {
     this.isScanning = true;
     window.hpetSound.playBeep(1000, 0.06);
 
-    // 1) 캔버스에 현재 프레임 캡처 (실제 카메라가 있을 때)
+    let imageBlob = null;
     if (this.canvasEl && this.videoEl && this.stream) {
       this.canvasEl.width = this.videoEl.videoWidth || 640;
       this.canvasEl.height = this.videoEl.videoHeight || 480;
       const ctx = this.canvasEl.getContext('2d');
       ctx.drawImage(this.videoEl, 0, 0);
+      imageBlob = await new Promise(resolve => this.canvasEl.toBlob(resolve, 'image/jpeg'));
     }
 
-    // 2) AI 스캔 오버레이 표시
     const scanOverlay = document.getElementById('ai-scanning-overlay');
     if (scanOverlay) scanOverlay.classList.remove('hidden');
 
-    // 3) 2초 뒤 분석 완료 시뮬레이션 (성공률 85%)
-    setTimeout(() => {
-      const isSuccess = Math.random() < 0.85;
+    try {
+      const state = window.hpetStore.state;
+      const unverified = state.supplements.find(s => !s.takenToday);
+      if (!unverified) {
+         throw new Error("인증할 영양제가 없습니다.");
+      }
+
+      // 카메라가 없어 blob이 생성 안됐을 경우 빈 파일 대체 (에러 방지)
+      if (!imageBlob) {
+        imageBlob = new Blob(["dummy content"], { type: "image/jpeg" });
+      }
+
+      // 서버로 사진 전송 및 판정
+      await window.hpetApi.verifyDosePhoto(unverified.id, imageBlob);
 
       if (scanOverlay) scanOverlay.classList.add('hidden');
       this.isScanning = false;
+      this.onAuthSuccess(unverified);
 
-      if (isSuccess) {
-        this.onAuthSuccess();
-      } else {
-        this.onAuthFail();
-      }
-    }, 2200);
+    } catch (err) {
+      if (scanOverlay) scanOverlay.classList.add('hidden');
+      this.isScanning = false;
+      this.onAuthFail(err.message);
+    }
   }
 
   // ── 인증 성공 처리 ──
-  onAuthSuccess() {
+  onAuthSuccess(unverified) {
     window.hpetSound.playSuccess();
 
-    // 아직 인증 안 된 첫 번째 영양제를 자동 인증 처리
-    const state = window.hpetStore.state;
-    const unverified = state.supplements.find(s => !s.takenToday);
     if (unverified) {
       window.hpetStore.markSupplementTaken(unverified.id);
     }
 
-    // 보상 모달 표시
     const rewardTitle = document.getElementById('reward-title');
     const rewardDesc = document.getElementById('reward-desc');
     const rewardIcon = document.getElementById('reward-icon');
@@ -145,10 +152,7 @@ class HPetSupplementAuth {
     if (rewardIcon) rewardIcon.textContent = '🧪';
     if (modal) modal.classList.remove('hidden');
 
-    // 보상 모달 닫힘 시 대시보드로 복귀
     const closeBtn = document.getElementById('btn-close-reward');
-    const originalHandler = closeBtn?.onclick;
-
     if (closeBtn) {
       closeBtn.onclick = () => {
         modal.classList.add('hidden');
@@ -159,7 +163,7 @@ class HPetSupplementAuth {
   }
 
   // ── 인증 실패 처리 ──
-  onAuthFail() {
+  onAuthFail(errorMsg) {
     window.hpetSound.playBeep(220, 0.2, 'sawtooth');
 
     const rewardTitle = document.getElementById('reward-title');
@@ -168,11 +172,10 @@ class HPetSupplementAuth {
     const modal = document.getElementById('modal-reward');
 
     if (rewardTitle) rewardTitle.textContent = '인증 실패 😢';
-    if (rewardDesc) rewardDesc.textContent = '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
+    if (rewardDesc) rewardDesc.textContent = errorMsg || '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
     if (rewardIcon) rewardIcon.textContent = '📷';
     if (modal) modal.classList.remove('hidden');
 
-    // 실패 시 모달 닫으면 카메라 화면 유지
     const closeBtn = document.getElementById('btn-close-reward');
     if (closeBtn) {
       closeBtn.onclick = () => {

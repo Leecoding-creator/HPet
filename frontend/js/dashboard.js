@@ -100,9 +100,49 @@ class HPetDashboardManager {
     this.dateTag.textContent = `${month}월 ${date}일 (${dayName})`;
   }
 
-  render() {
-    this.updateGauges();
-    this.renderMissions();
+  async render() {
+    try {
+      const summary = await window.hpetApi.getHomeSummary();
+      if (!summary) return;
+      
+      // Update store state with latest summary
+      window.hpetStore.state.pet.exp = summary.characterExp || 0;
+      window.hpetStore.state.pet.maxExp = summary.characterMaxExp || 100;
+      window.hpetStore.state.pet.level = summary.characterLevel || 1;
+      window.hpetStore.state.pet.postureHealth = summary.postureScore || 100;
+      window.hpetStore.state.pet.charImage = summary.characterImageUrl || window.hpetStore.state.pet.charImage;
+      window.hpetStore.state.pet.name = summary.characterName || window.hpetStore.state.pet.name;
+      
+      // Update supplements
+      if (summary.supplements) {
+        window.hpetStore.state.supplements = summary.supplements.map(s => ({
+          id: s.id || s.userSupplementId,
+          name: s.name,
+          time: s.time || s.doseTime,
+          takenToday: s.takenToday || s.isTaken
+        }));
+      }
+
+      // 렌더링
+      this.updateHeader(summary);
+      this.updateGauges();
+      this.renderMissions();
+      
+      // 캐릭터 이미지 갱신
+      const charImg = document.getElementById('pet-char-img');
+      if (charImg && window.hpetStore.state.pet.charImage) {
+        charImg.src = window.hpetStore.state.pet.charImage;
+      }
+    } catch(err) {
+      console.error("홈 요약 정보 로드 실패:", err);
+    }
+  }
+
+  updateHeader(summary) {
+    const usernameEl = document.getElementById('header-username');
+    const streakEl = document.getElementById('header-streak');
+    if (usernameEl) usernameEl.textContent = `${summary.userName || window.hpetStore.state.user.name}님`;
+    if (streakEl) streakEl.textContent = summary.streakDays || window.hpetStore.state.user.streak;
   }
 
   updateGauges() {
