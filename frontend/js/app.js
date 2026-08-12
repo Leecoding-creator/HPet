@@ -281,11 +281,11 @@ const HPetUI = {
         e.target.classList.add('active');
 
         if (tab === 'login') {
-          document.getElementById('form-login').classList.remove('hidden');
-          document.getElementById('form-signup').classList.add('hidden');
+          document.getElementById('login-container').classList.remove('hidden');
+          document.getElementById('signup-container').classList.add('hidden');
         } else {
-          document.getElementById('form-login').classList.add('hidden');
-          document.getElementById('form-signup').classList.remove('hidden');
+          document.getElementById('login-container').classList.add('hidden');
+          document.getElementById('signup-container').classList.remove('hidden');
         }
       });
     });
@@ -416,12 +416,22 @@ const HPetUI = {
         document.querySelector(`.auth-tabs .tab-btn[data-tab="${tab}"]`)?.classList.add('active');
 
         if (tab === 'login') {
-          document.getElementById('form-login').classList.remove('hidden');
-          document.getElementById('form-signup').classList.add('hidden');
+          document.getElementById('login-container').classList.remove('hidden');
+          document.getElementById('signup-container').classList.add('hidden');
         } else {
-          document.getElementById('form-login').classList.add('hidden');
-          document.getElementById('form-signup').classList.remove('hidden');
+          document.getElementById('login-container').classList.add('hidden');
+          document.getElementById('signup-container').classList.remove('hidden');
         }
+      });
+    });
+
+    // 상단 뒤로가기 버튼
+    document.querySelectorAll('.retro-back-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // 회원가입 창에서 뒤로가기 누르면 로그인 창으로 복귀
+        document.getElementById('login-container').classList.remove('hidden');
+        document.getElementById('signup-container').classList.add('hidden');
       });
     });
 
@@ -450,36 +460,44 @@ const HPetUI = {
         <i class="fa-solid fa-circle-check text-primary"></i>
       </div>
     `).join('');
+
+    // 클릭 시 체크박스 토글
+    container.querySelectorAll('.recommend-card').forEach(card => {
+      card.addEventListener('click', () => {
+        card.classList.toggle('selected');
+        const icon = card.querySelector('i');
+        if (card.classList.contains('selected')) {
+          icon.className = 'fa-solid fa-circle-check text-primary';
+        } else {
+          icon.className = 'fa-solid fa-circle-plus';
+        }
+      });
+    });
   },
 
   renderPetOptions() {
     const container = document.getElementById('pet-selection-grid');
     if (!container) return;
-    // 실제 char_*.png 이미지 사용 (백엔드 연동 전 프론트 임시)
-    const pets = HPetStore.CHAR_IMAGES;
+    
+    // 캐릭터 랜덤 배정
+    const pet = window.hpetStore.assignRandomChar();
 
-    container.innerHTML = pets.map((pet, idx) => `
-      <div class="pet-option-card ${idx === 0 ? 'selected' : ''}" data-id="${pet.id}">
-        <img src="${pet.file}" alt="${pet.name}" style="width:64px;height:64px;object-fit:contain;">
-        <strong>${pet.name}</strong>
+    container.innerHTML = `
+      <div class="pet-option-card selected" style="cursor: default; width: 100%; padding: 32px 16px; border: 2px solid var(--primary-color);">
+        <img src="${pet.file}" alt="${pet.name}" style="width:120px;height:120px;object-fit:contain;margin-bottom:16px;">
+        <strong style="font-size: 20px;">당신의 파트너는 '${pet.name}'입니다!</strong>
+        <p style="margin-top:8px;color:var(--text-mid);font-size:14px;white-space:normal;">건강 습관을 위한 여정을 함께 할게요.</p>
       </div>
-    `).join('');
+    `;
 
-    // 캐릭터 선택 클릭 이벤트
-    container.querySelectorAll('.pet-option-card').forEach(card => {
-      card.addEventListener('click', () => {
-        container.querySelectorAll('.pet-option-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        const charId = card.dataset.id;
-        const chosen = HPetStore.CHAR_IMAGES.find(c => c.id === charId);
-        if (chosen) {
-          window.hpetStore.state.pet.charId = chosen.id;
-          window.hpetStore.state.pet.charImage = chosen.file;
-          window.hpetStore.state.pet.name = chosen.name;
-          window.hpetStore.saveState();
-        }
-      });
-    });
+    // 상단 텍스트 수정
+    const step3 = document.getElementById('setup-step-3');
+    if(step3) {
+      const h2 = step3.querySelector('h2');
+      if(h2) h2.textContent = "파트너 HPet 캐릭터 배정 완료";
+      const desc = step3.querySelector('.step-desc');
+      if(desc) desc.textContent = "프로필 분석 결과에 맞춰 펫이 랜덤 배정되었어요!";
+    }
   },
 
   renderDashboard() {
