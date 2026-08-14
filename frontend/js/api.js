@@ -78,13 +78,24 @@ class HPetAPI {
         try {
           errData = await response.json();
         } catch(e) {}
-        throw new Error(errData.message || `API Error: ${response.status}`);
+        throw new Error(errData.error?.message || errData.message || `API Error: ${response.status}`);
       }
 
       // 응답 본문이 없는 경우(204 No Content 등) 대비
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        return await response.json();
+        const payload = await response.json();
+
+        // The backend wraps responses as { success, data, error }.
+        // Expose data to callers and preserve nested error messages.
+        if (payload && typeof payload === 'object' && 'success' in payload) {
+          if (!payload.success) {
+            throw new Error(payload.error?.message || 'Request failed.');
+          }
+          return payload.data;
+        }
+
+        return payload;
       }
       return null;
 
@@ -103,7 +114,9 @@ class HPetAPI {
         body: JSON.stringify({ refreshToken: this.getRefreshToken() })
       });
       if (response.ok) {
-        const data = await response.json();
+        const payload = await response.json();
+        if (payload?.success === false) return false;
+        const data = payload?.data ?? payload;
         this.setTokens(data.accessToken, data.refreshToken);
         return true;
       }

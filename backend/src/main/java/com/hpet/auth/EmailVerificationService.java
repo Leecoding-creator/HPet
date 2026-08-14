@@ -44,7 +44,7 @@ public class EmailVerificationService {
 
     @Transactional
     public void sendVerificationCode(SendVerificationEmailRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(UserNotFoundException::new);
         sendVerificationCode(user);
     }
@@ -65,7 +65,7 @@ public class EmailVerificationService {
 
     @Transactional
     public void confirmVerificationCode(ConfirmVerificationEmailRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(UserNotFoundException::new);
 
         EmailVerificationCode verificationCode = codeRepository
