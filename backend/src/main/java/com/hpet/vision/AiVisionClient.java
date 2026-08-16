@@ -14,4 +14,10 @@ public interface AiVisionClient {
      * @param supplementName 인증 대상 영양제 이름 (예: "비타민") - 프롬프트에 활용
      */
     VisionJudgement judge(byte[] imageBytes, String mimeType, String supplementName);
+
+    /**
+     * 자세(거북목) 판정용. success=true면 "거북목/자세 불량이 감지됨"을 의미한다
+     * (영양제 인증의 success=true "인증 성공"과 의미가 반대이니 호출부에서 헷갈리지 않게 주의).
+     */
+    VisionJudgement judgePosture(byte[] imageBytes, String mimeType);
 }

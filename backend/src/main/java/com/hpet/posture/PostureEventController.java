@@ -4,6 +4,7 @@ import com.hpet.common.ApiResponse;
 import com.hpet.posture.dto.PostureEventCreateRequest;
 import com.hpet.posture.dto.PostureEventResponse;
 import com.hpet.posture.dto.PostureSummaryResponse;
+import com.hpet.posture.dto.PostureVerificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,12 +29,19 @@ public class PostureEventController {
         this.postureEventService = postureEventService;
     }
 
-    @Operation(summary = "자세 불량 이벤트 저장 - 판정은 클라이언트에서 완료된 상태로 전달됨")
+    @Operation(summary = "자세 불량 이벤트 저장 - 판정은 클라이언트에서 완료된 상태로 전달됨 (레거시, 네이티브 앱 전환 시 사용)")
     @PostMapping
     public ResponseEntity<ApiResponse<PostureEventResponse>> register(
             @AuthenticationPrincipal Long userId, @Valid @RequestBody PostureEventCreateRequest request) {
         PostureEventResponse response = postureEventService.register(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    }
+
+    @Operation(summary = "사진 업로드 → AI가 거북목 여부 판정 (웹 프로토타입 방식)")
+    @PostMapping(value = "/photo", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<PostureVerificationResponse>> verifyPhoto(
+            @AuthenticationPrincipal Long userId, @RequestParam MultipartFile image) {
+        return ResponseEntity.ok(ApiResponse.success(postureEventService.verifyPhoto(userId, image)));
     }
 
     @Operation(summary = "자세 불량 이력 조회 - startDate/endDate 없으면 최근 7일 기본 적용")
