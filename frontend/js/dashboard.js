@@ -2,6 +2,22 @@
  * HPet - Dashboard Controller & Mission Checklist Management (Stage 4)
  */
 
+// 캐릭터 코드(백엔드) → 로컬 이미지/이름 자산 매핑
+const CHAR_CODE_TO_IMAGE = {
+  TURTLE: 'char_turtle.png',
+  CHICK: 'char_chick.png',
+  OTTER: 'char_otter.png',
+  HEDGEHOG: 'char_hedgehog.png'
+};
+
+// 성장 단계(백엔드 6단계 enum) → 한글 라벨 / 레벨 숫자
+// 팀 결정 필요(작업지시서 3번): 정식 EXP/레벨 게이지가 정해지기 전까지의 임시 근사치
+const STAGE_LABELS = {
+  BABY: '아기', TODDLER: '유아기', CHILD: '어린이',
+  TEEN: '청소년', ADULT: '성체', GROWN: '완전성장'
+};
+const STAGE_INDEX = { BABY: 1, TODDLER: 2, CHILD: 3, TEEN: 4, ADULT: 5, GROWN: 6 };
+
 class HPetDashboardManager {
   constructor() {
     this.dateTag = null;
@@ -100,80 +116,111 @@ class HPetDashboardManager {
     this.dateTag.textContent = `${month}월 ${date}일 (${dayName})`;
   }
 
-  render() {
-    this.updateGauges();
-    this.renderMissions();
+  async render() {
+    if (!window.hpetApi || !window.hpetApi.isLoggedIn()) return;
+
+    try {
+      const [summary, profile] = await Promise.all([
+        window.hpetApi.getHomeSummary(),
+        window.hpetApi.getMyProfile().catch(() => null)
+      ]);
+
+      if (profile) {
+        window.hpetStore.state.user.name = profile.nickname || profile.email;
+        const headerName = document.getElementById('header-username');
+        if (headerName) headerName.textContent = `${window.hpetStore.state.user.name}님`;
+      }
+
+      this.renderCharacter(summary.characterSummary);
+      this.renderMissions(summary.doseSummary);
+      this.renderPosture(summary.postureSummary);
+    } catch (err) {
+      console.error('홈 요약 조회 실패', err);
+      if (err.status === 401) {
+        window.hpetApi.clearTokens();
+        window.hpetRouter.navigateTo('auth');
+      }
+    }
   }
 
-  updateGauges() {
-    const state = window.hpetStore.state;
-    
-    // 포션/경험치 바
-    const barExp = document.getElementById('bar-exp');
-    const valExp = document.getElementById('val-exp');
-    if (barExp && valExp) {
-      barExp.style.width = `${state.pet.exp}%`;
-      valExp.textContent = `Lv.${state.pet.level} (${state.pet.exp}/${state.pet.maxExp})`;
+  renderCharacter(characterSummary) {
+    const nameEl = document.getElementById('pet-name-text');
+    const levelEl = document.getElementById('pet-level-text');
+    const growthBar = document.getElementById('pet-growth-bar');
+    const growthText = document.getElementById('pet-growth-text');
+    const mainImg = document.getElementById('main-pet-img');
+    const postureImg = document.getElementById('posture-char-img');
+
+    // characterSummary는 아직 캐릭터가 배정되지 않은 경우 null (최초 영양제 등록 전)
+    if (!characterSummary) {
+      if (nameEl) nameEl.textContent = '준비 중';
+      if (levelEl) levelEl.textContent = '';
+      if (growthBar) growthBar.style.width = '0%';
+      if (growthText) growthText.innerHTML = '영양제를 등록하면 캐릭터가 배정돼요';
+      return;
     }
 
-    // 자세 건강도 바
-    const barPosture = document.getElementById('bar-posture');
-    const valPosture = document.getElementById('val-posture');
-    if (barPosture && valPosture) {
-      barPosture.style.width = `${state.pet.postureHealth}%`;
-      valPosture.textContent = `${state.pet.postureHealth} / 100`;
+    const charFile = CHAR_CODE_TO_IMAGE[characterSummary.characterCode] || 'char_chick.png';
+    const stageLabel = STAGE_LABELS[characterSummary.stage] || characterSummary.stage;
+    const stageIdx = STAGE_INDEX[characterSummary.stage] || 1;
+    // 백엔드는 EXP/레벨 대신 growthDays(누적 성장일수)+stage만 제공.
+    // 팀 결정 전까지 "완전 성장 = 31일" 가정으로 근사한 게이지(작업지시서 3번 항목 참고).
+    const growthPercent = Math.max(0, Math.min(100, Math.round((characterSummary.growthDays / 31) * 100)));
+
+    if (nameEl) nameEl.textContent = characterSummary.characterName;
+    if (levelEl) levelEl.textContent = `Lv.${stageIdx} ${stageLabel}`;
+    if (growthBar) growthBar.style.width = `${growthPercent}%`;
+    if (growthText) growthText.innerHTML = `<strong>${characterSummary.growthDays}</strong>일 성장 (${growthPercent}%)`;
+    if (mainImg) {
+      mainImg.src = charFile;
+      mainImg.alt = `HPet 캐릭터: ${characterSummary.characterName}`;
     }
+    if (postureImg) postureImg.src = charFile;
   }
 
-  renderMissions() {
+  renderMissions(doseSummary) {
     if (!this.missionContainer) return;
-    const state = window.hpetStore.state;
+    const doseList = (doseSummary && doseSummary.doseList) || [];
 
-    if (!state.supplements || state.supplements.length === 0) {
+    if (doseList.length === 0) {
       this.missionContainer.innerHTML = `
         <div class="empty-mission">
           <p>등록된 영양제가 없습니다. 프로필 설정에서 추가해보세요!</p>
         </div>
       `;
-      return;
+    } else {
+      const colors = ['yellow', 'blue', 'red', 'green', 'purple'];
+      this.missionContainer.innerHTML = doseList.map((dose, idx) => {
+        const colorCls = colors[idx % colors.length];
+        return `
+          <div class="pill-item ${dose.completed ? 'taken' : ''}" data-user-supplement-id="${dose.userSupplementId}">
+            <i class="fa-solid fa-capsules pill-icon ${colorCls}"></i>
+            <span class="pill-name">${dose.supplementName}</span>
+            ${dose.completed
+              ? '<i class="fa-solid fa-circle-check check-icon text-green"></i>'
+              : '<i class="fa-regular fa-circle check-icon text-gray"></i>'
+            }
+          </div>
+        `;
+      }).join('');
     }
 
-    // 영양제 약어 매핑 (기획서 스타일: C, D, Zn, Pro 등)
-    const abbrMap = {
-      '비타민 C': 'C', '비타민 D': 'D', '아연': 'Zn', '프로바이오틱스': 'Pro',
-      '오메가3': 'Ω3', '마그네슘': 'Mg', '비타민 B군': 'B', '철분': 'Fe',
-      '루테인': 'Lu', '칼슘': 'Ca', '콜라겐': 'Co'
-    };
-
-    // 아이콘 색상 클래스 순환 (새 디자인용)
-    const colors = ['yellow', 'blue', 'red', 'green', 'purple'];
-    const icons = ['fa-capsules', 'fa-tablets', 'fa-pills'];
-
-    // 대시보드 리스트 렌더링 (최대 3개 정도만 미리보기로 보여주거나 전체 보여주기)
-    this.missionContainer.innerHTML = state.supplements.slice(0, 3).map((supp, idx) => {
-      const colorCls = colors[idx % colors.length];
-      const iconCls = icons[idx % icons.length];
-      
-      return `
-        <div class="pill-item ${supp.takenToday ? 'taken' : ''}">
-          <i class="fa-solid ${iconCls} pill-icon ${colorCls}"></i>
-          <span class="pill-name">${supp.name}</span>
-          <span class="pill-time">${supp.time || ''}</span>
-          ${supp.takenToday
-            ? '<i class="fa-solid fa-circle-check check-icon text-green"></i>'
-            : '<i class="fa-regular fa-circle check-icon text-gray"></i>'
-          }
-        </div>
-      `;
-    }).join('');
-
-    // 여기서 카드의 숫자 부분 업데이트
-    const takenCount = state.supplements.filter(s => s.takenToday).length;
-    const totalCount = state.supplements.length;
+    const totalCount = (doseSummary && doseSummary.totalSupplementCount) || 0;
+    const completedCount = (doseSummary && doseSummary.completedCount) || 0;
     const fractionText = document.querySelector('.home-card.pill-card .fraction-text');
     if (fractionText) {
-      fractionText.innerHTML = `<strong class="text-yellow">${takenCount}</strong> / ${totalCount}`;
+      fractionText.innerHTML = `<strong class="text-yellow">${completedCount}</strong> / ${totalCount}`;
     }
+  }
+
+  renderPosture(postureSummary) {
+    const textEl = document.getElementById('posture-summary-text');
+    if (!textEl) return;
+    const todayCount = (postureSummary && postureSummary.todayCount) || 0;
+    // 백엔드는 "오늘 감지 횟수"만 제공, 0~100 점수 개념은 없음 (작업지시서 3번 항목 참고)
+    textEl.textContent = todayCount === 0
+      ? '오늘은 거북목이 감지되지 않았어요!'
+      : `오늘 거북목이 ${todayCount}회 감지됐어요`;
   }
 
   renderManageSupplements() {
