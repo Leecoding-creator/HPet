@@ -268,8 +268,8 @@
             오늘도<br>잘 부탁해!<br>❤️
           </div>
           <div class="character-wrapper" id="pet-character-wrapper" style="position: relative;">
-            <!-- 백엔드 연결 전까지 기본 이미지 사용 -->
-            <img src="char_chick.png" alt="토비" class="main-character-img bounce-animation" id="main-pet-img">
+            <!-- JS 렌더 전 기본 이미지 (dashboard.js renderCharacter가 실제 캐릭터로 교체함) -->
+            <img src="assets/characters/CHICK/1.png" alt="토비" class="main-character-img bounce-animation" id="main-pet-img">
             <!-- 장착 아이템 오버레이 레이어 -->
             <div id="equipped-item-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
           </div>
@@ -319,7 +319,7 @@
               <h3><i class="fa-solid fa-child-reaching text-green"></i> 자세 교정</h3>
             </div>
             <div class="posture-character-wrapper">
-              <img src="char_chick.png" alt="스트레칭" class="posture-character-img" id="posture-char-img">
+              <img src="assets/characters/CHICK/1.png" alt="스트레칭" class="posture-character-img" id="posture-char-img">
             </div>
             <p class="posture-text" id="posture-summary-text">바른 자세로 건강해져요!</p>
             <button class="btn btn-green btn-block" id="btn-action-game">
@@ -614,7 +614,7 @@
           <!-- 미리보기 영역 -->
           <div class="closet-preview-area" style="background: var(--bg-main); border-radius: 12px; padding: 20px; text-align: center; position: relative; margin-bottom: 16px;">
             <div style="position: relative; display: inline-block; width: 120px; height: 120px;">
-              <img src="char_chick.png" alt="preview" style="width: 100%; height: 100%; object-fit: contain;">
+              <img src="assets/characters/CHICK/1.png" alt="preview" style="width: 100%; height: 100%; object-fit: contain;">
               <div id="closet-preview-item" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; font-size: 60px; line-height: 120px; display: none;"></div>
             </div>
           </div>

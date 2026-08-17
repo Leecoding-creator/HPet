@@ -2,14 +2,6 @@
  * HPet - Dashboard Controller & Mission Checklist Management (Stage 4)
  */
 
-// 캐릭터 코드(백엔드) → 로컬 이미지/이름 자산 매핑
-const CHAR_CODE_TO_IMAGE = {
-  TURTLE: 'char_turtle.png',
-  CHICK: 'char_chick.png',
-  OTTER: 'char_otter.png',
-  HEDGEHOG: 'char_hedgehog.png'
-};
-
 // 성장 단계(백엔드 6단계 enum) → 한글 라벨 / 레벨 숫자
 // 팀 결정 필요(작업지시서 3번): 정식 EXP/레벨 게이지가 정해지기 전까지의 임시 근사치
 const STAGE_LABELS = {
@@ -157,10 +149,14 @@ class HPetDashboardManager {
       if (levelEl) levelEl.textContent = '';
       if (growthBar) growthBar.style.width = '0%';
       if (growthText) growthText.innerHTML = '영양제를 등록하면 캐릭터가 배정돼요';
+      // 캐릭터 미배정 상태의 기본 표시 이미지 (임의로 CHICK 1단계 사용)
+      const placeholder = getCharacterImagePath('CHICK', 0);
+      if (mainImg) { mainImg.src = placeholder; mainImg.alt = 'HPet 캐릭터: 준비 중'; }
+      if (postureImg) postureImg.src = placeholder;
       return;
     }
 
-    const charFile = CHAR_CODE_TO_IMAGE[characterSummary.characterCode] || 'char_chick.png';
+    const charFile = getCharacterImagePath(characterSummary.characterCode, characterSummary.growthDays);
     const stageLabel = STAGE_LABELS[characterSummary.stage] || characterSummary.stage;
     const stageIdx = STAGE_INDEX[characterSummary.stage] || 1;
     // 백엔드는 EXP/레벨 대신 growthDays(누적 성장일수)+stage만 제공.

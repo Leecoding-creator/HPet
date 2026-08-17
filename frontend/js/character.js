@@ -2,6 +2,22 @@
  * HPet - Tamagotchi Character Animation & Interaction Engine (Stage 4)
  */
 
+// ⚠️ 임시 처리: 백엔드가 아직 경험치(0~300) 필드를 내려주지 않아서,
+// growthDays(누적 성장일수)로 캐릭터 이미지 단계(1~4)를 임시로 근사한다.
+// TODO: 백엔드에 경험치 필드가 추가되면 이 함수는 삭제하고
+// 경험치 기준(0~49→1, 50~119→2, 120~199→3, 200~300→4)으로 교체할 것.
+function getStageNumber(growthDays) {
+  if (growthDays <= 5) return 1;
+  if (growthDays <= 12) return 2;
+  if (growthDays <= 20) return 3;
+  return 4;
+}
+
+// characterCode(TURTLE/CHICK/OTTER/HEDGEHOG)는 백엔드 값을 그대로 폴더명으로 사용한다.
+function getCharacterImagePath(characterCode, growthDays) {
+  return `assets/characters/${characterCode}/${getStageNumber(growthDays)}.png`;
+}
+
 class HPetCharacterEngine {
   constructor() {
     this.container = null;

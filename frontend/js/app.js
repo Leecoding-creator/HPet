@@ -8,10 +8,10 @@
 class HPetStore {
   // 캐릭터 이미지 목록 (백엔드 연동 전 프론트 임시 배정용)
   static CHAR_IMAGES = [
-    { id: 'chick', name: '병아리', file: 'char_chick.png' },
-    { id: 'hedgehog', name: '고슴도치', file: 'char_hedgehog.png' },
-    { id: 'otter', name: '수달이', file: 'char_otter.png' },
-    { id: 'turtle', name: '거북이', file: 'char_turtle.png' }
+    { id: 'chick', name: '병아리', file: 'assets/characters/CHICK/1.png' },
+    { id: 'hedgehog', name: '고슴도치', file: 'assets/characters/HEDGEHOG/1.png' },
+    { id: 'otter', name: '수달이', file: 'assets/characters/OTTER/1.png' },
+    { id: 'turtle', name: '거북이', file: 'assets/characters/TURTLE/1.png' }
   ];
 
   constructor() {
@@ -45,7 +45,7 @@ class HPetStore {
         id: 'pet_default',
         name: '병아리',
         charId: 'chick',
-        charImage: 'char_chick.png',  // 기본값, 로그인 시 랜덤 배정됨
+        charImage: 'assets/characters/CHICK/1.png',  // 기본값, 로그인 시 랜덤 배정됨
         type: 'character',
         level: 2,
         exp: 68,
