@@ -41,8 +41,10 @@ class HPetProfileManager {
     // 로그아웃
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
-      btnLogout.addEventListener('click', () => {
+      btnLogout.addEventListener('click', async () => {
         if (confirm('로그아웃 하시겠습니까?')) {
+          // 서버 refreshToken 폐기 후 로컬 토큰 삭제 (실패해도 로컬은 정리한다)
+          await window.hpetApi.logout().catch(err => console.error('로그아웃 요청 실패', err));
           window.hpetStore.state.user.isLoggedIn = false;
           window.hpetStore.saveState();
           window.hpetRouter.navigateTo('auth');
@@ -55,6 +57,7 @@ class HPetProfileManager {
     if (btnDelete) {
       btnDelete.addEventListener('click', () => {
         if (confirm('정말 탈퇴하시겠습니까? 모든 펫 정보와 기록이 삭제되며 복구할 수 없습니다.')) {
+          window.hpetApi.clearTokens();
           localStorage.removeItem('HPET_APP_STATE_V1');
           localStorage.removeItem('hpet_dark_mode');
           alert('회원탈퇴가 완료되었습니다. 처음부터 다시 시작합니다.');

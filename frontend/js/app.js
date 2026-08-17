@@ -264,10 +264,12 @@ const HPetUI = {
   },
 
   checkInitialSession() {
-    const state = window.hpetStore.state;
-    if (state.user.isLoggedIn) {
+    // 로그인 여부는 accessToken 보유 여부로 판단한다 (localStorage 상태 플래그가 아니라).
+    if (window.hpetApi.isLoggedIn()) {
       window.hpetRouter.navigateTo('dashboard');
     } else {
+      window.hpetStore.state.user.isLoggedIn = false;
+      window.hpetStore.saveState();
       window.hpetRouter.navigateTo('auth');
     }
   },
@@ -291,26 +293,77 @@ const HPetUI = {
     });
 
     // Form Submissions
-    document.getElementById('form-login').addEventListener('submit', (e) => {
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
       e.preventDefault();
-      window.hpetStore.state.user.isLoggedIn = true;
-      // 캐릭터가 아직 배정되지 않았으면 랜덤 배정 (백엔드 연동 전 임시)
-      if (!window.hpetStore.state.pet.charImage) {
-        window.hpetStore.assignRandomChar();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      try {
+        await window.hpetApi.login(email, password);
+
+        // 이름 표시용으로 내 프로필(닉네임)을 받아 로컬 상태에 반영
+        try {
+          const profile = await window.hpetApi.getMyProfile();
+          window.hpetStore.state.user.name = profile.nickname || profile.email;
+          window.hpetStore.state.user.email = profile.email;
+        } catch (profileErr) {
+          console.error('프로필 조회 실패', profileErr);
+        }
+
+        window.hpetStore.state.user.isLoggedIn = true;
+        window.hpetStore.saveState();
+        window.hpetSound.playSuccess();
+        window.hpetRouter.navigateTo('dashboard');
+      } catch (err) {
+        errEl.textContent = err.message || '로그인에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
       }
-      window.hpetStore.saveState();
-      window.hpetSound.playSuccess();
-      window.hpetRouter.navigateTo('dashboard');
     });
 
-    document.getElementById('form-signup').addEventListener('submit', (e) => {
+    document.getElementById('form-signup').addEventListener('submit', async (e) => {
       e.preventDefault();
-      window.hpetStore.state.user.isLoggedIn = true;
-      // 회원가입 시 랜덤 캐릭터 배정 (백엔드 연동 전 임시)
-      window.hpetStore.assignRandomChar();
-      window.hpetStore.saveState();
-      window.hpetSound.playSuccess();
-      window.hpetRouter.navigateTo('profileSetup');
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const passwordConfirm = document.getElementById('signup-password-confirm').value;
+      const errEl = document.getElementById('signup-error');
+      const confirmMsgEl = document.getElementById('val-pw-confirm');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errEl.classList.add('hidden');
+      confirmMsgEl.classList.add('hidden');
+
+      if (password !== passwordConfirm) {
+        confirmMsgEl.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      try {
+        await window.hpetApi.signup(email, password);
+        // 회원가입 API는 토큰을 내려주지 않으므로 곧바로 로그인해서 토큰을 받는다.
+        await window.hpetApi.login(email, password);
+
+        window.hpetStore.state.user.isLoggedIn = true;
+        window.hpetStore.state.user.email = email;
+        // 캐릭터는 최초 영양제 등록 시 백엔드에서 자동 배정되므로, 그 전까지는 로컬 임시 배정을 유지한다.
+        if (!window.hpetStore.state.pet.charImage) {
+          window.hpetStore.assignRandomChar();
+        }
+        window.hpetStore.saveState();
+        window.hpetSound.playSuccess();
+        window.hpetRouter.navigateTo('profileSetup');
+      } catch (err) {
+        errEl.textContent = err.message || '회원가입에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+      }
     });
 
     // Profile Setup Chips
