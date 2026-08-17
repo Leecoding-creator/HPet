@@ -1,20 +1,18 @@
 package com.hpet.user;
 
+import com.hpet.auth.AuthService;
 import com.hpet.common.ApiResponse;
-import com.hpet.common.exception.InvalidTokenException;
-import com.hpet.domain.user.User;
-import com.hpet.domain.user.UserRepository;
 import com.hpet.user.dto.MyProfileResponse;
+import com.hpet.user.dto.UpdateNicknameRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * JWT 인증이 실제로 걸려있는지 눈으로 확인할 수 있는 데모용 API.
+ * 로그인한 사용자 정보 조회/수정 + 회원 탈퇴.
  * Swagger에서 Authorize에 accessToken을 넣고 호출해보면 됨.
  */
 @Tag(name = "User", description = "로그인한 사용자 정보")
@@ -22,20 +20,31 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
+    private final AuthService authService;
 
-    public UserController(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService, AuthService authService) {
+        this.userService = userService;
+        this.authService = authService;
     }
 
     @Operation(summary = "내 정보 조회 (인증 필요)")
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MyProfileResponse>> me(@AuthenticationPrincipal Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new InvalidTokenException("존재하지 않는 사용자입니다."));
+        return ResponseEntity.ok(ApiResponse.success(userService.getMyProfile(userId)));
+    }
 
-        MyProfileResponse response = new MyProfileResponse(
-                user.getId(), user.getEmail(), user.getProvider().name(), user.isEmailVerified(), user.getCreatedAt());
-        return ResponseEntity.ok(ApiResponse.success(response));
+    @Operation(summary = "닉네임 수정")
+    @PutMapping("/me/nickname")
+    public ResponseEntity<ApiResponse<MyProfileResponse>> updateNickname(
+            @AuthenticationPrincipal Long userId, @Valid @RequestBody UpdateNicknameRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(userService.updateNickname(userId, request)));
+    }
+
+    @Operation(summary = "회원 탈퇴 (소프트 삭제) - 탈퇴 후 같은 이메일로 재가입 가능")
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> withdraw(@AuthenticationPrincipal Long userId) {
+        authService.withdraw(userId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

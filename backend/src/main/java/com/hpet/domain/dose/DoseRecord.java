@@ -37,6 +37,9 @@ public class DoseRecord {
 
     private LocalDateTime verifiedAt;
 
+    // 인증 사진 저장 URL. PHOTO 인증 성공 시에만 채워진다 (MANUAL 체크는 사진이 없어서 null).
+    private String imageUrl;
+
     protected DoseRecord() {
         // JPA
     }
@@ -52,6 +55,10 @@ public class DoseRecord {
     public void markVerified() {
         this.verified = true;
         this.verifiedAt = LocalDateTime.now();
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Long getId() {
@@ -80,5 +87,9 @@ public class DoseRecord {
 
     public LocalDateTime getVerifiedAt() {
         return verifiedAt;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }

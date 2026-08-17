@@ -39,7 +39,8 @@ public class AuthService {
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        // 탈퇴(소프트 삭제)한 계정은 "존재하지 않는 것"으로 취급해야 같은 이메일로 재가입이 가능하다.
+        if (userRepository.existsByEmailAndDeletedAtIsNull(request.getEmail())) {
             throw new DuplicateEmailException(request.getEmail());
         }
         User user = new User(request.getEmail(), passwordEncoder.encode(request.getPassword()));
@@ -54,7 +55,8 @@ public class AuthService {
 
     @Transactional
     public TokenResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        // 탈퇴한 계정은 로그인도 안 되게 막는다 (존재하지 않는 계정과 동일하게 취급).
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
@@ -98,5 +100,16 @@ public class AuthService {
                 .orElseThrow(() -> new InvalidTokenException("존재하지 않는 사용자입니다."));
         user.updateRefreshToken(null);
         log.info("User logged out: id={}", userId);
+    }
+
+    /**
+     * 회원 탈퇴. 실제로 데이터를 지우지 않고 소프트 삭제한다 (User.markDeleted() 참고).
+     */
+    @Transactional
+    public void withdraw(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new InvalidTokenException("존재하지 않는 사용자입니다."));
+        user.markDeleted();
+        log.info("User withdrawn: id={}", userId);
     }
 }

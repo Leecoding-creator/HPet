@@ -58,6 +58,24 @@ public class OpenAiVisionClient implements AiVisionClient {
 
     @Override
     public VisionJudgement judge(byte[] imageBytes, String mimeType, String supplementName) {
+        String prompt = "이 사진이 사용자가 '" + supplementName + "'(영양제/보충제)를 실제로 복용하고 있거나 "
+                + "복용 직전 준비된 모습(예: 손이나 입 근처에 해당 영양제가 보이는 상태)을 보여주는지 판정해줘. "
+                + "반드시 아래 JSON 형식으로만 답해. 다른 텍스트는 절대 포함하지 마: "
+                + "{\"success\": true 또는 false, \"reason\": \"판단 근거를 한국어로 한 문장\"}";
+        return callVisionApi(imageBytes, mimeType, prompt);
+    }
+
+    @Override
+    public VisionJudgement judgePosture(byte[] imageBytes, String mimeType) {
+        // 여기서는 success=true가 "거북목/자세 불량이 감지됨"을 의미하도록 프롬프트를 짠다.
+        String prompt = "이 사진 속 사람이 거북목 자세(고개가 앞으로 많이 나와있고 어깨가 굽은 상태)인지 판정해줘. "
+                + "반드시 아래 JSON 형식으로만 답해. 다른 텍스트는 절대 포함하지 마: "
+                + "{\"success\": true 또는 false (true면 거북목/자세 불량이 감지된 것), "
+                + "\"reason\": \"판단 근거를 한국어로 한 문장\"}";
+        return callVisionApi(imageBytes, mimeType, prompt);
+    }
+
+    private VisionJudgement callVisionApi(byte[] imageBytes, String mimeType, String prompt) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("OPENAI_API_KEY가 설정되지 않아 AI 판정을 건너뜁니다.");
             return new VisionJudgement(false, "OpenAI API 키가 설정되지 않았습니다. 환경변수 OPENAI_API_KEY를 확인해주세요.");
@@ -67,7 +85,7 @@ public class OpenAiVisionClient implements AiVisionClient {
         // 판정 정확도에 지장 없는 선(기본 1024px)까지만 줄이고, 이미 작으면 확대하지 않는다.
         ImageResizer.Resized resized = imageResizer.resize(imageBytes, maxImageDimension, imageQuality);
 
-        String requestBody = buildRequestBody(resized.bytes(), resized.mimeType(), supplementName);
+        String requestBody = buildRequestBody(resized.bytes(), resized.mimeType(), prompt);
 
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
@@ -102,14 +120,9 @@ public class OpenAiVisionClient implements AiVisionClient {
         return new VisionJudgement(false, "AI 판정에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
 
-    private String buildRequestBody(byte[] imageBytes, String mimeType, String supplementName) {
+    private String buildRequestBody(byte[] imageBytes, String mimeType, String prompt) {
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
         String dataUrl = "data:" + mimeType + ";base64," + base64Image;
-
-        String prompt = "이 사진이 사용자가 '" + supplementName + "'(영양제/보충제)를 실제로 복용하고 있거나 "
-                + "복용 직전 준비된 모습(예: 손이나 입 근처에 해당 영양제가 보이는 상태)을 보여주는지 판정해줘. "
-                + "반드시 아래 JSON 형식으로만 답해. 다른 텍스트는 절대 포함하지 마: "
-                + "{\"success\": true 또는 false, \"reason\": \"판단 근거를 한국어로 한 문장\"}";
 
         ObjectNode root = objectMapper.createObjectNode();
         root.put("model", model);

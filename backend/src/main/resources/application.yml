@@ -38,6 +38,12 @@ openai:
   max-image-dimension: 1024
   image-quality: 0.85
 
+# 인증 사진 로컬 저장 경로 (해커톤 스코프 - 실서비스 전환 시 S3로 교체 예정)
+storage:
+  local:
+    root: ./uploads
+  public-base-url: /files
+
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB
 
