@@ -81,7 +81,7 @@ public class DoseVerificationService {
         if (!judgement.success()) {
             log.info("Verification failed: userId={}, userSupplementId={}, reason={}",
                     userId, userSupplementId, judgement.reason());
-            return new DoseVerificationResponse(false, judgement.reason(), 0, 0, false, 0, null);
+            return new DoseVerificationResponse(false, judgement.reason(), 0, 0, false, 0, null, 0, 0, 10);
         }
 
         // 인증 성공한 사진만 저장한다.
@@ -110,7 +110,8 @@ public class DoseVerificationService {
     private DoseVerificationResponse toResponse(boolean verified, String reason, PotionService.Result result, String imageUrl) {
         return new DoseVerificationResponse(
                 verified, reason, result.verifiedCountToday(), result.requiredCountToday(),
-                result.dayCompleted(), result.growthDaysAfter(), imageUrl);
+                result.dayCompleted(), result.growthPointsAfter(), imageUrl,
+                result.pointsGainedThisTime(), result.todayEarnedPoints(), result.dailyMaxPoints());
     }
 
     private byte[] readBytes(MultipartFile image) {
