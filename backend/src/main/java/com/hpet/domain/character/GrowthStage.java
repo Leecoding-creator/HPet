@@ -1,43 +1,57 @@
 package com.hpet.domain.character;
 
 /**
- * 회의 1-3 확정: 누적 성장 일수에 따른 성장 단계.
- * 성장치(포션)는 Phase 5에서 지급되지만, 단계 계산 로직은 미리 만들어둔다.
+ * ⚠️ 2차 기획안 반영 (준호님 요청, 2026-08-17): 1차 기획의 6단계(BABY~GROWN, 날짜 기준)에서
+ * 4단계(경험치 0~300 기준)로 재설계.
+ *
+ * 구간:
+ *   1단계: 0~49
+ *   2단계: 50~119
+ *   3단계: 120~199
+ *   4단계: 200~300
+ *
+ * ⚠️ 단계 이름은 2차 기획안에 명시된 게 없어서 일단 "1단계~4단계"로 임시 지정함.
+ * 디자인/기획에서 실제 이름(예: 아기/유아/청소년/성체 같은) 정해지면 이 enum의 name만 바꾸면 됨.
+ *
+ * ⚠️ 코스튬(옷장) 착용: 팀 확정(2026-08-17) - 단계 상관없이 처음부터(1단계) 착용 가능.
+ * (1차 기획의 "7일차부터"는 폐기됨)
  */
 public enum GrowthStage {
-    BABY(1, 2),          // 아기
-    TODDLER(3, 6),        // 유아
-    CHILD(7, 13),         // 어린이 (코스튬 착용 가능 시작)
-    TEEN(14, 20),         // 청소년
-    ADULT(21, 30),        // 성체
-    GROWN(31, Integer.MAX_VALUE); // 성장 완료
+    STAGE_1(0, 49),
+    STAGE_2(50, 119),
+    STAGE_3(120, 199),
+    STAGE_4(200, 300);
 
-    private final int minDay;
-    private final int maxDay;
+    private final int minPoints;
+    private final int maxPoints;
 
-    GrowthStage(int minDay, int maxDay) {
-        this.minDay = minDay;
-        this.maxDay = maxDay;
+    GrowthStage(int minPoints, int maxPoints) {
+        this.minPoints = minPoints;
+        this.maxPoints = maxPoints;
     }
 
-    /**
-     * 누적 성장 일수(growthDays)로부터 현재 단계를 계산한다.
-     * 0일차(아직 하루도 다 못 채움)는 BABY 단계로 취급한다.
-     */
-    public static GrowthStage fromDays(int days) {
-        int effectiveDays = Math.max(days, 1);
+    public static GrowthStage fromPoints(int points) {
+        int clamped = Math.max(0, Math.min(300, points));
         for (GrowthStage stage : values()) {
-            if (effectiveDays >= stage.minDay && effectiveDays <= stage.maxDay) {
+            if (clamped >= stage.minPoints && clamped <= stage.maxPoints) {
                 return stage;
             }
         }
-        return GROWN;
+        return STAGE_4; // 안전망 (이론상 도달 안 함)
     }
 
     /**
-     * 회의 1-2 확정: 7일차(어린이 단계)부터 코스튬 착용 가능.
+     * 코스튬 착용 가능 여부. 팀 확정(2026-08-17): 단계 상관없이 처음부터(1단계, 경험치 0부터) 착용 가능.
      */
     public boolean canWearCostume() {
-        return this.ordinal() >= CHILD.ordinal();
+        return true;
+    }
+
+    public int getMinPoints() {
+        return minPoints;
+    }
+
+    public int getMaxPoints() {
+        return maxPoints;
     }
 }
