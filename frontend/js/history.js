@@ -219,11 +219,33 @@ class HPetHistoryManager {
   }
 
   renderStats() {
-    const stats = window.hpetStore.state.stats;
+    const history = window.hpetStore.state.history || {};
     
-    // 임의의 퍼센트 데이터 (실제 서비스에선 계산 로직 필요)
-    const suppPercent = 85; 
-    const turtleCount = stats.turtleNeckDetectionsThisWeek || 4;
+    // 현재 보고 있는 연/월의 데이터만 필터링
+    const targetMonthPrefix = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}`;
+    const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+    let currentDayInMonth = daysInMonth;
+    
+    // 만약 현재 연/월이 오늘이 속한 연/월이라면, 오늘까지만 분모로 계산
+    const now = new Date();
+    if (this.currentYear === now.getFullYear() && this.currentMonth === now.getMonth()) {
+      currentDayInMonth = now.getDate();
+    } else if (this.currentYear > now.getFullYear() || (this.currentYear === now.getFullYear() && this.currentMonth > now.getMonth())) {
+      // 미래의 달
+      currentDayInMonth = 0;
+    }
+
+    let supplementTakenDays = 0;
+    let turtleCount = 0;
+
+    Object.keys(history).forEach(dateKey => {
+      if (dateKey.startsWith(targetMonthPrefix)) {
+        if (history[dateKey].supplements) supplementTakenDays++;
+        turtleCount += (history[dateKey].turtleCount || 0);
+      }
+    });
+
+    const suppPercent = currentDayInMonth === 0 ? 0 : Math.round((supplementTakenDays / currentDayInMonth) * 100);
 
     const suppPercentEl = document.getElementById('stat-supp-percent');
     const suppBarEl = document.getElementById('stat-supp-bar');

@@ -82,7 +82,7 @@ public class DoseRecordService {
         return new DoseRecordResponse(
                 doseRecord.getId(),
                 userSupplement.getId(),
-                userSupplement.getSupplement().getName(),
+                userSupplement.getCustomName(),
                 doseRecord.getDoseDate(),
                 doseRecord.getMethod(),
                 doseRecord.isVerified(),

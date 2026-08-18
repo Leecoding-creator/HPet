@@ -23,6 +23,13 @@ class HPetProfileManager {
       this.render();
     });
 
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    if (btnCloseSettings) {
+      btnCloseSettings.addEventListener('click', () => {
+        document.getElementById('modal-settings')?.classList.add('hidden');
+      });
+    }
+
     // 다크모드 토글
     const darkToggle = document.getElementById('toggle-dark-mode');
     if (darkToggle) {

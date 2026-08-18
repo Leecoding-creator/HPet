@@ -76,7 +76,7 @@ public class DoseVerificationService {
         byte[] imageBytes = readBytes(image);
         String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
 
-        VisionJudgement judgement = aiVisionClient.judge(imageBytes, mimeType, userSupplement.getSupplement().getName());
+        VisionJudgement judgement = aiVisionClient.judge(imageBytes, mimeType, userSupplement.getCustomName());
 
         if (!judgement.success()) {
             log.info("Verification failed: userId={}, userSupplementId={}, reason={}",

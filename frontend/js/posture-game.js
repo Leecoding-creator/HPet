@@ -195,9 +195,10 @@ class HPetPostureGame {
       window.hpetStore.saveState();
       window.hpetSound.playSuccess();
 
-      // 캐릭터 정상 복귀
+      // 캐릭터 정상 복귀 및 기뻐하는 애니메이션 재생
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(false);
+        window.hpetCharacter.playMotion('Happiness', 4000);
       }
 
       this.showResultModal(

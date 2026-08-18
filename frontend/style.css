@@ -2116,3 +2116,43 @@ input:checked + .theme-slider:before {
     transform: translateY(-80px) scale(1.2);
   }
 }
+
+/* 캐릭터 이미지 비율 문제 해결 */
+.main-character-img, .posture-character-img {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+/* 옷장 아이템 정사각형 및 스타일링 */
+.closet-item {
+  flex: 0 0 100px;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closet-item.selected {
+  border: 2px solid var(--primary);
+  background: var(--primary-pale);
+}
+
+.closet-item-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.closet-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dark);
+}

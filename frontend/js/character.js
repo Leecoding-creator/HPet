@@ -2,20 +2,24 @@
  * HPet - Tamagotchi Character Animation & Interaction Engine (Stage 4)
  */
 
-// ⚠️ 임시 처리: 백엔드가 아직 경험치(0~300) 필드를 내려주지 않아서,
-// growthDays(누적 성장일수)로 캐릭터 이미지 단계(1~4)를 임시로 근사한다.
-// TODO: 백엔드에 경험치 필드가 추가되면 이 함수는 삭제하고
-// 경험치 기준(0~49→1, 50~119→2, 120~199→3, 200~300→4)으로 교체할 것.
-function getStageNumber(growthDays) {
-  if (growthDays <= 5) return 1;
-  if (growthDays <= 12) return 2;
-  if (growthDays <= 20) return 3;
+// 경험치(0~300) 기준으로 캐릭터 이미지 단계(1~4) 계산
+function getStageNumber(growthPoints) {
+  if (growthPoints <= 49) return 1;
+  if (growthPoints <= 119) return 2;
+  if (growthPoints <= 199) return 3;
   return 4;
 }
 
 // characterCode(TURTLE/CHICK/OTTER/HEDGEHOG)는 백엔드 값을 그대로 폴더명으로 사용한다.
-function getCharacterImagePath(characterCode, growthDays) {
-  return `assets/characters/${characterCode}/${getStageNumber(growthDays)}.png`;
+function getCharacterImagePath(characterCode, growthPoints) {
+  return `assets/characters/${characterCode}/${getStageNumber(growthPoints)}.png`;
+}
+
+// 모션 자산 경로 해석 (Potion, Unhappiness, Happiness)
+function getCharacterMotionPath(characterCode, growthPoints, action) {
+  const stage = getStageNumber(growthPoints);
+  const titleCasedCode = characterCode.charAt(0).toUpperCase() + characterCode.slice(1).toLowerCase();
+  return `assets/characters_motion/${characterCode}/${stage}/${titleCasedCode}_${action}.gif`;
 }
 
 class HPetCharacterEngine {
@@ -43,6 +47,37 @@ class HPetCharacterEngine {
     window.addEventListener('hpet_state_changed', () => {
       this.applyEquippedItems();
     });
+
+    this.motionTimeout = null;
+  }
+
+  // 모션 제어 로직
+  playMotion(action, duration = null) {
+    if (!window.hpetStore || !window.hpetStore.state.pet) return;
+
+    // 기존 예약된 모션 초기화 타이머 취소
+    if (this.motionTimeout) {
+      clearTimeout(this.motionTimeout);
+      this.motionTimeout = null;
+    }
+
+    // 글로벌 상태 업데이트
+    window.hpetStore.state.pet.currentMotion = action;
+    
+    // 대시보드가 열려 있다면 렌더링 갱신
+    if (window.hpetDashboard) {
+      window.hpetDashboard.updateGauges();
+    }
+
+    // 지정된 시간 후 해제 (null이면 계속 루프)
+    if (duration !== null) {
+      this.motionTimeout = setTimeout(() => {
+        window.hpetStore.state.pet.currentMotion = null;
+        if (window.hpetDashboard) {
+          window.hpetDashboard.updateGauges();
+        }
+      }, duration);
+    }
   }
 
   bindInteractions() {
@@ -126,9 +161,15 @@ class HPetCharacterEngine {
       this.visual.classList.add('turtle-neck-warning');
       this.sayBubble("⚠️ 으악! 거북목 감지! 목과 어깨를 쭉 펴주세요!");
       window.hpetSound.playBeep(220, 0.3, 'square');
+      // 거북목 지속 루프 (게임 종료 시 해제되므로 duration=null)
+      this.playMotion('Unhappiness', null);
     } else {
       this.visual.classList.remove('turtle-neck-warning');
       this.sayBubble("바른 자세 유지 중! 훌륭해요! 👍");
+      // 거북목 상태 해제
+      if (window.hpetStore.state.pet.currentMotion === 'Unhappiness') {
+        this.playMotion(null);
+      }
     }
   }
 
@@ -213,10 +254,7 @@ class HPetCharacterEngine {
   initCloset() {
     this.availableItems = [
       { id: 'item_ribbon', name: '빨간 리본', icon: '🎀', type: 'head' },
-      { id: 'item_glasses', name: '선글라스', icon: '🕶️', type: 'face' },
-      { id: 'item_hat', name: '밀짚모자', icon: '👒', type: 'head' },
-      { id: 'item_tie', name: '넥타이', icon: '👔', type: 'body' },
-      { id: 'item_crown', name: '왕관', icon: '👑', type: 'head' }
+      { id: 'item_glasses', name: '선글라스', icon: '🕶️', type: 'face' }
     ];
 
     const btnCloset = document.getElementById('btn-closet');
@@ -277,8 +315,8 @@ class HPetCharacterEngine {
           // 장착 해제
           this.tempEquipped = this.tempEquipped.filter(i => i !== id);
         } else {
-          // 같은 타입(head, face 등)이 있으면 교체 로직도 가능하나, 지금은 단순 다중 장착 허용
-          this.tempEquipped.push(id);
+          // 1개씩만 적용되도록 기존 아이템 초기화 후 추가
+          this.tempEquipped = [id];
         }
         
         this.renderCloset();
@@ -314,10 +352,7 @@ class HPetCharacterEngine {
     // availableItems가 아직 선언 안됐을 수 있으므로 하드코딩된 리스트 임시 참조
     const allItems = this.availableItems || [
       { id: 'item_ribbon', icon: '🎀' },
-      { id: 'item_glasses', icon: '🕶️' },
-      { id: 'item_hat', icon: '👒' },
-      { id: 'item_tie', icon: '👔' },
-      { id: 'item_crown', icon: '👑' }
+      { id: 'item_glasses', icon: '🕶️' }
     ];
 
     const icons = equipped.map(id => {

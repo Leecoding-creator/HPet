@@ -75,7 +75,7 @@ public class DoseNotificationService {
 
     private DoseNotificationResponse toResponse(DoseNotification n) {
         return new DoseNotificationResponse(
-                n.getId(), n.getUserSupplement().getId(), n.getUserSupplement().getSupplement().getName(),
+                n.getId(), n.getUserSupplement().getId(), n.getUserSupplement().getCustomName(),
                 n.getNotifyTime(), n.isEnabled());
     }
 }

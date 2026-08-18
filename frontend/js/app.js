@@ -190,8 +190,7 @@ class HPetRouter {
       dashboard: document.getElementById('view-dashboard'),
       cameraAuth: document.getElementById('view-camera-auth'),
       postureGame: document.getElementById('view-posture-game'),
-      history: document.getElementById('view-history'),
-      profile: document.getElementById('view-profile')
+      history: document.getElementById('view-history')
     };
 
     this.nav = document.getElementById('app-nav');
@@ -415,6 +414,11 @@ const HPetUI = {
 
     document.getElementById('btn-action-game')?.addEventListener('click', () => {
       window.hpetRouter.navigateTo('postureGame');
+    });
+
+    document.getElementById('btn-settings')?.addEventListener('click', () => {
+      document.getElementById('modal-settings')?.classList.remove('hidden');
+      if (window.hpetProfile) window.hpetProfile.render();
     });
 
     document.getElementById('btn-close-cam')?.addEventListener('click', () => {
