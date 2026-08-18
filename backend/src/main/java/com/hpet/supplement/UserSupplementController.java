@@ -25,9 +25,16 @@ public class UserSupplementController {
 
     @Operation(summary = "영양제 등록 - 처음 등록 시 매핑되는 캐릭터가 자동 배정됨")
     @PostMapping
-    public ResponseEntity<ApiResponse<List<UserSupplementResponse>>> register(
+    public ResponseEntity<ApiResponse<UserSupplementResponse>> register(
             @AuthenticationPrincipal Long userId, @Valid @RequestBody RegisterSupplementsRequest request) {
         return ResponseEntity.ok(ApiResponse.success(userSupplementService.register(userId, request)));
+    }
+
+    @Operation(summary = "영양제 수정")
+    @PutMapping("/{userSupplementId}")
+    public ResponseEntity<ApiResponse<UserSupplementResponse>> update(
+            @AuthenticationPrincipal Long userId, @PathVariable Long userSupplementId, @Valid @RequestBody RegisterSupplementsRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(userSupplementService.update(userId, userSupplementId, request)));
     }
 
     @Operation(summary = "내가 등록한 영양제 목록 조회")

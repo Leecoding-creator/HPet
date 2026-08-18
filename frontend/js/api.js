@@ -124,6 +124,27 @@ class HPetApiClient {
   getHomeSummary() {
     return this.request('GET', '/api/home/summary');
   }
+
+  // 영양제 API
+  searchSupplements(keyword = '') {
+    return this.request('GET', `/api/supplements${keyword ? `?keyword=${encodeURIComponent(keyword)}` : ''}`);
+  }
+
+  getUserSupplements() {
+    return this.request('GET', '/api/users/me/supplements');
+  }
+
+  addUserSupplement(customName, doseTime) {
+    return this.request('POST', '/api/users/me/supplements', { body: { customName, doseTime } });
+  }
+
+  updateUserSupplement(userSupplementId, customName, doseTime) {
+    return this.request('PUT', `/api/users/me/supplements/${userSupplementId}`, { body: { customName, doseTime } });
+  }
+
+  removeUserSupplement(userSupplementId) {
+    return this.request('DELETE', `/api/users/me/supplements/${userSupplementId}`);
+  }
 }
 
 window.HPetApiError = HPetApiError;

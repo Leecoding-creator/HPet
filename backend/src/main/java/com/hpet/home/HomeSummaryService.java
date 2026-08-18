@@ -60,7 +60,7 @@ public class HomeSummaryService {
 
         List<HomeSummaryResponse.DoseItem> doseList = registeredSupplements.stream()
                 .map(us -> new HomeSummaryResponse.DoseItem(
-                        us.getId(), us.getSupplement().getName(), completedUserSupplementIds.contains(us.getId())))
+                        us.getId(), us.getCustomName(), completedUserSupplementIds.contains(us.getId())))
                 .toList();
 
         return new HomeSummaryResponse.DoseSummary(registeredSupplements.size(), completedUserSupplementIds.size(), doseList);

@@ -44,43 +44,26 @@ class HPetProfileSetupManager {
       this.showCustomSupplementModal();
     });
 
-    // 커스텀 영양제 폼 제출
-    document.getElementById('form-add-supp')?.addEventListener('click', (e) => {
+    // 커스텀 영양제 폼 제출 (온보딩 모달 전용)
+    document.getElementById('form-add-supp')?.addEventListener('click', async (e) => {
       if (e.target.id === 'btn-save-custom-supp') {
         const nameInput = document.getElementById('custom-supp-name');
         const timeInput = document.getElementById('custom-supp-time');
-        
-        const editId = document.getElementById('modal-custom-supp').dataset.editId;
-        
         if (nameInput && nameInput.value.trim()) {
-          if (editId) {
-            // 수정 모드
-            const target = window.hpetStore.state.supplements.find(s => s.id === editId);
-            if (target) {
-              target.name = nameInput.value.trim();
-              target.time = timeInput ? timeInput.value : '09:00 AM';
-              target.icon = target.name.substring(0, 2);
-            }
-          } else {
-            // 새 영양제 추가 모드
-            const newSupp = {
+           const newSupp = {
               id: 'supp_' + Date.now(),
               name: nameInput.value.trim(),
-              time: timeInput ? timeInput.value : '09:00 AM',
+              time: timeInput ? timeInput.value : '09:00',
               takenToday: false,
               icon: nameInput.value.substring(0, 2)
-            };
-            window.hpetStore.state.supplements.push(newSupp);
-          }
-          window.hpetStore.saveState();
-          
-          this.renderRecommendations();
-          const modal = document.getElementById('modal-custom-supp');
-          if (modal) {
-            modal.classList.add('hidden');
-            delete modal.dataset.editId; // 모드 초기화
-          }
-          window.hpetSound.playSuccess();
+           };
+           window.hpetStore.state.supplements.push(newSupp);
+           window.hpetStore.saveState();
+           
+           this.renderRecommendations();
+           const modal = document.getElementById('modal-custom-supp');
+           if (modal) modal.classList.add('hidden');
+           window.hpetSound.playSuccess();
         }
       }
     });
