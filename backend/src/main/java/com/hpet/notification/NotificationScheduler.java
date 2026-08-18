@@ -53,7 +53,7 @@ public class NotificationScheduler {
     }
 
     private void dispatch(DoseNotification notification) {
-        String supplementName = notification.getUserSupplement().getSupplement().getName();
+        String supplementName = notification.getUserSupplement().getCustomName();
         List<DeviceToken> tokens = deviceTokenRepository.findByUserId(notification.getUserId());
 
         if (tokens.isEmpty()) {

@@ -2,6 +2,7 @@ package com.hpet.dose;
 
 import com.hpet.common.exception.DoseSupplementAccessDeniedException;
 import com.hpet.common.exception.UserSupplementNotFoundForDoseException;
+import com.hpet.common.storage.ImageStorageService;
 import com.hpet.domain.dose.DoseMethod;
 import com.hpet.domain.dose.DoseRecord;
 import com.hpet.domain.dose.DoseRecordRepository;
@@ -26,7 +27,8 @@ import java.util.Optional;
  *
  * (해커톤 스코프 단순화) 원래 계획은 S3 Presigned URL 업로드 + 폴링 방식 결과 조회였지만,
  * 시간 관계상 "업로드와 동시에 동기 호출로 즉시 결과 반환"으로 단순화했다.
- * 사진 원본은 저장하지 않고 AI 호출에만 사용한다 (개인정보/용량 이슈 - 회의 1-7 로깅 원칙과 동일한 이유).
+ * 인증 성공한 사진은 ImageStorageService로 로컬 디스크에 저장하고 URL을 응답/DoseRecord에 남긴다
+ * (실패한 사진은 저장하지 않음 - 반복 실패로 저장공간 낭비되는 걸 방지).
  */
 @Service
 public class DoseVerificationService {
@@ -37,15 +39,18 @@ public class DoseVerificationService {
     private final DoseRecordRepository doseRecordRepository;
     private final AiVisionClient aiVisionClient;
     private final PotionService potionService;
+    private final ImageStorageService imageStorageService;
 
     public DoseVerificationService(UserSupplementRepository userSupplementRepository,
                                     DoseRecordRepository doseRecordRepository,
                                     AiVisionClient aiVisionClient,
-                                    PotionService potionService) {
+                                    PotionService potionService,
+                                    ImageStorageService imageStorageService) {
         this.userSupplementRepository = userSupplementRepository;
         this.doseRecordRepository = doseRecordRepository;
         this.aiVisionClient = aiVisionClient;
         this.potionService = potionService;
+        this.imageStorageService = imageStorageService;
     }
 
     @Transactional
@@ -65,29 +70,33 @@ public class DoseVerificationService {
         if (existing.isPresent() && existing.get().isVerified()) {
             log.info("Already verified today: userId={}, userSupplementId={}", userId, userSupplementId);
             PotionService.Result result = potionService.applyPotionForToday(userId);
-            return toResponse(true, "오늘 이미 인증이 완료된 영양제입니다.", result);
+            return toResponse(true, "오늘 이미 인증이 완료된 영양제입니다.", result, existing.get().getImageUrl());
         }
 
         byte[] imageBytes = readBytes(image);
         String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
 
-        VisionJudgement judgement = aiVisionClient.judge(imageBytes, mimeType, userSupplement.getSupplement().getName());
+        VisionJudgement judgement = aiVisionClient.judge(imageBytes, mimeType, userSupplement.getCustomName());
 
         if (!judgement.success()) {
             log.info("Verification failed: userId={}, userSupplementId={}, reason={}",
                     userId, userSupplementId, judgement.reason());
-            return new DoseVerificationResponse(false, judgement.reason(), 0, 0, false, 0);
+            return new DoseVerificationResponse(false, judgement.reason(), 0, 0, false, 0, null, 0, 0, 10);
         }
+
+        // 인증 성공한 사진만 저장한다.
+        String imageUrl = imageStorageService.save("dose", imageBytes);
 
         DoseRecord record = existing.orElseGet(() -> new DoseRecord(userId, userSupplement, today, DoseMethod.PHOTO));
         record.markVerified();
+        record.setImageUrl(imageUrl);
         if (existing.isEmpty()) {
             doseRecordRepository.save(record);
         }
-        log.info("Verification succeeded: userId={}, userSupplementId={}", userId, userSupplementId);
+        log.info("Verification succeeded: userId={}, userSupplementId={}, imageUrl={}", userId, userSupplementId, imageUrl);
 
         PotionService.Result result = potionService.applyPotionForToday(userId);
-        return toResponse(true, judgement.reason(), result);
+        return toResponse(true, judgement.reason(), result, imageUrl);
     }
 
     @Transactional(readOnly = true)
@@ -98,10 +107,11 @@ public class DoseVerificationService {
                 .orElse(new DoseVerificationStatusResponse(userSupplementId, false, null));
     }
 
-    private DoseVerificationResponse toResponse(boolean verified, String reason, PotionService.Result result) {
+    private DoseVerificationResponse toResponse(boolean verified, String reason, PotionService.Result result, String imageUrl) {
         return new DoseVerificationResponse(
                 verified, reason, result.verifiedCountToday(), result.requiredCountToday(),
-                result.dayCompleted(), result.growthDaysAfter());
+                result.dayCompleted(), result.growthPointsAfter(), imageUrl,
+                result.pointsGainedThisTime(), result.todayEarnedPoints(), result.dailyMaxPoints());
     }
 
     private byte[] readBytes(MultipartFile image) {

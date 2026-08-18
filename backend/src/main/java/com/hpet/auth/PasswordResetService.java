@@ -45,7 +45,7 @@ public class PasswordResetService {
 
     @Transactional
     public void requestReset(PasswordResetRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .orElseThrow(UserNotFoundException::new);
 
         String token = UUID.randomUUID().toString();

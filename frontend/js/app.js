@@ -8,10 +8,10 @@
 class HPetStore {
   // 캐릭터 이미지 목록 (백엔드 연동 전 프론트 임시 배정용)
   static CHAR_IMAGES = [
-    { id: 'chick', name: '병아리', file: 'char_chick.png' },
-    { id: 'hedgehog', name: '고슴도치', file: 'char_hedgehog.png' },
-    { id: 'otter', name: '수달이', file: 'char_otter.png' },
-    { id: 'turtle', name: '거북이', file: 'char_turtle.png' }
+    { id: 'chick', name: '병아리', file: 'assets/characters/CHICK/1.png' },
+    { id: 'hedgehog', name: '고슴도치', file: 'assets/characters/HEDGEHOG/1.png' },
+    { id: 'otter', name: '수달이', file: 'assets/characters/OTTER/1.png' },
+    { id: 'turtle', name: '거북이', file: 'assets/characters/TURTLE/1.png' }
   ];
 
   constructor() {
@@ -45,7 +45,7 @@ class HPetStore {
         id: 'pet_default',
         name: '병아리',
         charId: 'chick',
-        charImage: 'char_chick.png',  // 기본값, 로그인 시 랜덤 배정됨
+        charImage: 'assets/characters/CHICK/1.png',  // 기본값, 로그인 시 랜덤 배정됨
         type: 'character',
         level: 2,
         exp: 68,
@@ -190,8 +190,7 @@ class HPetRouter {
       dashboard: document.getElementById('view-dashboard'),
       cameraAuth: document.getElementById('view-camera-auth'),
       postureGame: document.getElementById('view-posture-game'),
-      history: document.getElementById('view-history'),
-      profile: document.getElementById('view-profile')
+      history: document.getElementById('view-history')
     };
 
     this.nav = document.getElementById('app-nav');
@@ -264,10 +263,12 @@ const HPetUI = {
   },
 
   checkInitialSession() {
-    const state = window.hpetStore.state;
-    if (state.user.isLoggedIn) {
+    // 로그인 여부는 accessToken 보유 여부로 판단한다 (localStorage 상태 플래그가 아니라).
+    if (window.hpetApi.isLoggedIn()) {
       window.hpetRouter.navigateTo('dashboard');
     } else {
+      window.hpetStore.state.user.isLoggedIn = false;
+      window.hpetStore.saveState();
       window.hpetRouter.navigateTo('auth');
     }
   },
@@ -291,26 +292,77 @@ const HPetUI = {
     });
 
     // Form Submissions
-    document.getElementById('form-login').addEventListener('submit', (e) => {
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
       e.preventDefault();
-      window.hpetStore.state.user.isLoggedIn = true;
-      // 캐릭터가 아직 배정되지 않았으면 랜덤 배정 (백엔드 연동 전 임시)
-      if (!window.hpetStore.state.pet.charImage) {
-        window.hpetStore.assignRandomChar();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errEl.classList.add('hidden');
+      submitBtn.disabled = true;
+      try {
+        await window.hpetApi.login(email, password);
+
+        // 이름 표시용으로 내 프로필(닉네임)을 받아 로컬 상태에 반영
+        try {
+          const profile = await window.hpetApi.getMyProfile();
+          window.hpetStore.state.user.name = profile.nickname || profile.email;
+          window.hpetStore.state.user.email = profile.email;
+        } catch (profileErr) {
+          console.error('프로필 조회 실패', profileErr);
+        }
+
+        window.hpetStore.state.user.isLoggedIn = true;
+        window.hpetStore.saveState();
+        window.hpetSound.playSuccess();
+        window.hpetRouter.navigateTo('dashboard');
+      } catch (err) {
+        errEl.textContent = err.message || '로그인에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
       }
-      window.hpetStore.saveState();
-      window.hpetSound.playSuccess();
-      window.hpetRouter.navigateTo('dashboard');
     });
 
-    document.getElementById('form-signup').addEventListener('submit', (e) => {
+    document.getElementById('form-signup').addEventListener('submit', async (e) => {
       e.preventDefault();
-      window.hpetStore.state.user.isLoggedIn = true;
-      // 회원가입 시 랜덤 캐릭터 배정 (백엔드 연동 전 임시)
-      window.hpetStore.assignRandomChar();
-      window.hpetStore.saveState();
-      window.hpetSound.playSuccess();
-      window.hpetRouter.navigateTo('profileSetup');
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const passwordConfirm = document.getElementById('signup-password-confirm').value;
+      const errEl = document.getElementById('signup-error');
+      const confirmMsgEl = document.getElementById('val-pw-confirm');
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      errEl.classList.add('hidden');
+      confirmMsgEl.classList.add('hidden');
+
+      if (password !== passwordConfirm) {
+        confirmMsgEl.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      try {
+        await window.hpetApi.signup(email, password);
+        // 회원가입 API는 토큰을 내려주지 않으므로 곧바로 로그인해서 토큰을 받는다.
+        await window.hpetApi.login(email, password);
+
+        window.hpetStore.state.user.isLoggedIn = true;
+        window.hpetStore.state.user.email = email;
+        // 캐릭터는 최초 영양제 등록 시 백엔드에서 자동 배정되므로, 그 전까지는 로컬 임시 배정을 유지한다.
+        if (!window.hpetStore.state.pet.charImage) {
+          window.hpetStore.assignRandomChar();
+        }
+        window.hpetStore.saveState();
+        window.hpetSound.playSuccess();
+        window.hpetRouter.navigateTo('profileSetup');
+      } catch (err) {
+        errEl.textContent = err.message || '회원가입에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+      }
     });
 
     // Profile Setup Chips
@@ -329,16 +381,39 @@ const HPetUI = {
     });
 
     // Profile Setup Steps Navigation
-    document.getElementById('btn-next-step-1')?.addEventListener('click', () => {
-      document.getElementById('setup-step-1').classList.add('hidden');
-      document.getElementById('setup-step-2').classList.remove('hidden');
-      this.renderRecommendations();
+    document.getElementById('btn-next-step-1')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const errEl = document.getElementById('setup-step1-error');
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      try {
+        await window.hpetProfileSetup.loadRecommendations();
+        document.getElementById('setup-step-1').classList.add('hidden');
+        document.getElementById('setup-step-2').classList.remove('hidden');
+      } catch (err) {
+        errEl.textContent = err.message || '건강 프로필 저장에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
     });
 
-    document.getElementById('btn-next-step-2')?.addEventListener('click', () => {
-      document.getElementById('setup-step-2').classList.add('hidden');
-      document.getElementById('setup-step-3').classList.remove('hidden');
-      this.renderPetOptions();
+    document.getElementById('btn-next-step-2')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const errEl = document.getElementById('setup-step2-error');
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      try {
+        const character = await window.hpetProfileSetup.registerSelectedSupplementsAndAssignCharacter();
+        this.renderAssignedCharacter(character);
+        document.getElementById('setup-step-2').classList.add('hidden');
+        document.getElementById('setup-step-3').classList.remove('hidden');
+      } catch (err) {
+        errEl.textContent = err.message || '영양제 등록에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     document.getElementById('btn-finish-setup')?.addEventListener('click', () => {
@@ -362,6 +437,11 @@ const HPetUI = {
 
     document.getElementById('btn-action-game')?.addEventListener('click', () => {
       window.hpetRouter.navigateTo('postureGame');
+    });
+
+    document.getElementById('btn-settings')?.addEventListener('click', () => {
+      document.getElementById('modal-settings')?.classList.remove('hidden');
+      if (window.hpetProfile) window.hpetProfile.render();
     });
 
     document.getElementById('btn-close-cam')?.addEventListener('click', () => {
@@ -441,62 +521,48 @@ const HPetUI = {
     });
   },
 
-  renderRecommendations() {
-    const container = document.getElementById('recommend-list');
-    if (!container) return;
-    const items = [
-      { name: '비타민 C', reason: '피로 회복 & 항산화 케어 추천', icon: '🍋' },
-      { name: '오메가 3', reason: '눈 피로 및 혈행 개선 추천', icon: '🐟' },
-      { name: '마그네슘', reason: '근육 이완 및 거북목 통증 완화', icon: '⚡' }
-    ];
-
-    container.innerHTML = items.map(item => `
-      <div class="recommend-card selected">
-        <div class="supp-icon">${item.icon}</div>
-        <div class="supp-info">
-          <div class="supp-name">${item.name}</div>
-          <div class="supp-reason">${item.reason}</div>
-        </div>
-        <i class="fa-solid fa-circle-check text-primary"></i>
-      </div>
-    `).join('');
-
-    // 클릭 시 체크박스 토글
-    container.querySelectorAll('.recommend-card').forEach(card => {
-      card.addEventListener('click', () => {
-        card.classList.toggle('selected');
-        const icon = card.querySelector('i');
-        if (card.classList.contains('selected')) {
-          icon.className = 'fa-solid fa-circle-check text-primary';
-        } else {
-          icon.className = 'fa-solid fa-circle-plus';
-        }
-      });
-    });
-  },
-
-  renderPetOptions() {
+  // 2단계 → 3단계 전환 시, 실제로 등록/배정된 캐릭터(또는 아직 미배정 상태)를 보여준다.
+  renderAssignedCharacter(character) {
     const container = document.getElementById('pet-selection-grid');
     if (!container) return;
-    
-    // 캐릭터 랜덤 배정
-    const pet = window.hpetStore.assignRandomChar();
+
+    const step3 = document.getElementById('setup-step-3');
+
+    if (!character) {
+      container.innerHTML = `
+        <div class="pet-option-card selected" style="cursor: default; width: 100%; padding: 32px 16px; border: 2px solid var(--primary-color);">
+          <strong style="font-size: 20px;">아직 파트너가 배정되지 않았어요</strong>
+          <p style="margin-top:8px;color:var(--text-mid);font-size:14px;white-space:normal;">철분/칼슘/오메가3/비타민/마그네슘/멜라토닌/비오틴 중 하나를 등록하면 파트너가 배정돼요. 대시보드에서 영양제를 추가해보세요!</p>
+        </div>
+      `;
+      if (step3) {
+        const h2 = step3.querySelector('h2');
+        if (h2) h2.textContent = "파트너는 곧 만나요";
+        const desc = step3.querySelector('.step-desc');
+        if (desc) desc.textContent = "영양제를 등록하면 그에 맞는 파트너가 배정됩니다.";
+      }
+      return;
+    }
+
+    const imgSrc = getCharacterImagePath(character.characterCode, character.growthPoints);
+    window.hpetStore.state.pet.charId = character.characterCode;
+    window.hpetStore.state.pet.charImage = imgSrc;
+    window.hpetStore.state.pet.name = character.characterName;
+    window.hpetStore.saveState();
 
     container.innerHTML = `
       <div class="pet-option-card selected" style="cursor: default; width: 100%; padding: 32px 16px; border: 2px solid var(--primary-color);">
-        <img src="${pet.file}" alt="${pet.name}" style="width:120px;height:120px;object-fit:contain;margin-bottom:16px;">
-        <strong style="font-size: 20px;">당신의 파트너는 '${pet.name}'입니다!</strong>
+        <img src="${imgSrc}" alt="${character.characterName}" style="width:120px;height:120px;object-fit:contain;margin-bottom:16px;">
+        <strong style="font-size: 20px;">당신의 파트너는 '${character.characterName}'입니다!</strong>
         <p style="margin-top:8px;color:var(--text-mid);font-size:14px;white-space:normal;">건강 습관을 위한 여정을 함께 할게요.</p>
       </div>
     `;
 
-    // 상단 텍스트 수정
-    const step3 = document.getElementById('setup-step-3');
-    if(step3) {
+    if (step3) {
       const h2 = step3.querySelector('h2');
-      if(h2) h2.textContent = "파트너 HPet 캐릭터 배정 완료";
+      if (h2) h2.textContent = "파트너 HPet 캐릭터 배정 완료";
       const desc = step3.querySelector('.step-desc');
-      if(desc) desc.textContent = "프로필 분석 결과에 맞춰 펫이 랜덤 배정되었어요!";
+      if (desc) desc.textContent = "등록하신 영양제 기준으로 파트너가 배정되었어요!";
     }
   },
 

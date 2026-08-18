@@ -34,12 +34,20 @@ public class DoseRecordController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @Operation(summary = "날짜별 복용 기록 조회 - date 파라미터 없으면 오늘 날짜 기준")
+    @Operation(summary = "복용 기록 조회 - date만 넘기면 하루치, startDate+endDate를 넘기면 기간 조회(캘린더용), 아무것도 없으면 오늘 날짜 기준")
     @GetMapping
     public ResponseEntity<ApiResponse<List<DoseRecordResponse>>> getByDate(
             @AuthenticationPrincipal Long userId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        List<DoseRecordResponse> response = doseRecordService.getByDate(userId, date);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        List<DoseRecordResponse> response;
+        if (startDate != null && endDate != null) {
+            response = doseRecordService.getByDateRange(userId, startDate, endDate);
+        } else {
+            response = doseRecordService.getByDate(userId, date);
+        }
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

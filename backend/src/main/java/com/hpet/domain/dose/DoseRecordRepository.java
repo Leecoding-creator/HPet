@@ -24,4 +24,8 @@ public interface DoseRecordRepository extends JpaRepository<DoseRecord, Long> {
 
     // Phase 5-9. 영양제 등록 취소(삭제) 전에, 관련 복용 기록이 있는지 확인하는 용도.
     boolean existsByUserSupplementId(Long userSupplementId);
+
+    // 히스토리 캘린더 조회용 - 기간(startDate~endDate)으로 조회.
+    // (원래 findByUserIdAndDoseDate 하루치만 있었는데, 캘린더 화면에서 한 달치를 한 번에 봐야 해서 추가함)
+    List<DoseRecord> findByUserIdAndDoseDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
 }

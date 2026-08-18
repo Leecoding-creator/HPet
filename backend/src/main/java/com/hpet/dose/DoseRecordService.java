@@ -67,12 +67,22 @@ public class DoseRecordService {
                 .toList();
     }
 
+    /**
+     * 히스토리 캘린더 화면용 - 기간으로 조회.
+     */
+    @Transactional(readOnly = true)
+    public List<DoseRecordResponse> getByDateRange(Long userId, LocalDate startDate, LocalDate endDate) {
+        return doseRecordRepository.findByUserIdAndDoseDateBetween(userId, startDate, endDate).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private DoseRecordResponse toResponse(DoseRecord doseRecord) {
         UserSupplement userSupplement = doseRecord.getUserSupplement();
         return new DoseRecordResponse(
                 doseRecord.getId(),
                 userSupplement.getId(),
-                userSupplement.getSupplement().getName(),
+                userSupplement.getCustomName(),
                 doseRecord.getDoseDate(),
                 doseRecord.getMethod(),
                 doseRecord.isVerified(),

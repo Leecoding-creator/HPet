@@ -31,6 +31,9 @@ public class PostureEvent {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    // 판정에 쓴 사진 저장 URL. 사진 기반 판정(POST /api/posture-events/photo)에서만 채워진다.
+    private String imageUrl;
+
     protected PostureEvent() {
         // JPA
     }
@@ -40,6 +43,10 @@ public class PostureEvent {
         this.detectedAt = detectedAt;
         this.angleDeg = angleDeg;
         this.durationMin = durationMin;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Long getId() {
@@ -64,5 +71,9 @@ public class PostureEvent {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }

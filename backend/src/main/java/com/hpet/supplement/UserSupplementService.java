@@ -48,25 +48,49 @@ public class UserSupplementService {
     }
 
     @Transactional
-    public List<UserSupplementResponse> register(Long userId, RegisterSupplementsRequest request) {
-        for (Long supplementId : request.getSupplementIds()) {
-            Supplement supplement = supplementRepository.findById(supplementId)
-                    .orElseThrow(() -> new SupplementNotFoundException(supplementId));
+    public UserSupplementResponse register(Long userId, RegisterSupplementsRequest request) {
+        String customName = request.getCustomName().trim();
+        String doseTime = request.getDoseTime().trim();
 
-            boolean alreadyRegistered = userSupplementRepository.existsByUserIdAndSupplement(userId, supplement);
-            if (!alreadyRegistered) {
-                userSupplementRepository.save(new UserSupplement(userId, supplement));
-                log.info("Supplement registered: userId={}, supplement={}", userId, supplement.getName());
-            }
-        }
+        // 마스터 Supplement 매핑 시도
+        Supplement matchedSupplement = supplementRepository.findByName(customName).orElse(null);
+
+        UserSupplement userSupplement = userSupplementRepository.save(new UserSupplement(userId, matchedSupplement, customName, doseTime));
+        log.info("Supplement registered: userId={}, customName={}, doseTime={}", userId, customName, doseTime);
 
         // 지금까지 등록된 전체 영양제 이름으로 캐릭터 배정을 시도 (이미 배정돼 있으면 내부에서 스킵됨)
         List<String> allRegisteredNames = userSupplementRepository.findByUserId(userId).stream()
-                .map(us -> us.getSupplement().getName())
+                .map(us -> us.getCustomName())
                 .toList();
         characterAssignmentService.assignIfNeeded(userId, allRegisteredNames);
 
-        return getMyList(userId);
+        return toResponse(userSupplement);
+    }
+
+    @Transactional
+    public UserSupplementResponse update(Long userId, Long userSupplementId, RegisterSupplementsRequest request) {
+        UserSupplement userSupplement = userSupplementRepository.findById(userSupplementId)
+                .orElseThrow(() -> new UserSupplementRegistrationNotFoundException(userSupplementId));
+
+        if (!userSupplement.getUserId().equals(userId)) {
+            throw new UserSupplementRegistrationNotFoundException(userSupplementId);
+        }
+
+        String customName = request.getCustomName().trim();
+        String doseTime = request.getDoseTime().trim();
+
+        Supplement matchedSupplement = supplementRepository.findByName(customName).orElse(null);
+        userSupplement.update(matchedSupplement, customName, doseTime);
+
+        log.info("Supplement updated: userId={}, userSupplementId={}, customName={}, doseTime={}", userId, userSupplementId, customName, doseTime);
+
+        // 업데이트된 이름으로 캐릭터 배정 재시도 (아직 배정 안 된 상태일 수 있으므로)
+        List<String> allRegisteredNames = userSupplementRepository.findByUserId(userId).stream()
+                .map(us -> us.getCustomName())
+                .toList();
+        characterAssignmentService.assignIfNeeded(userId, allRegisteredNames);
+
+        return toResponse(userSupplement);
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +124,13 @@ public class UserSupplementService {
     }
 
     private UserSupplementResponse toResponse(UserSupplement us) {
+        Long supplementId = us.getSupplement() != null ? us.getSupplement().getId() : null;
         return new UserSupplementResponse(
-                us.getId(), us.getSupplement().getId(), us.getSupplement().getName(), us.getRegisteredAt());
+                us.getId(),
+                supplementId,
+                us.getCustomName(),
+                us.getDoseTime(),
+                us.getRegisteredAt()
+        );
     }
 }

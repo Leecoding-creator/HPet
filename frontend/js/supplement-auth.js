@@ -6,132 +6,144 @@
 
 class HPetSupplementAuth {
   constructor() {
-    this.stream = null;           // 웹캠 MediaStream
-    this.videoEl = null;          // <video> 요소
-    this.canvasEl = null;         // 스냅샷용 <canvas>
+    this.fileInput = null;        // <input type="file">
+    this.previewImg = null;       // <img>
+    this.placeholder = null;      // 업로드 안내 영역
+    this.btnAnalyze = null;       // 분석 버튼
     this.isScanning = false;      // AI 분석 진행 중 여부
     this.currentSuppId = null;    // 현재 인증 대상 영양제 ID
   }
 
   init() {
-    this.videoEl = document.getElementById('webcam-preview');
-    this.canvasEl = document.getElementById('snapshot-canvas');
+    this.fileInput = document.getElementById('supp-image-input');
+    this.previewImg = document.getElementById('supp-image-preview');
+    this.placeholder = document.getElementById('upload-placeholder');
+    this.btnAnalyze = document.getElementById('btn-analyze');
     this.bindEvents();
   }
 
   bindEvents() {
-    // 셔터 버튼 클릭 → 촬영 & AI 분석 시작
-    document.getElementById('btn-shutter')?.addEventListener('click', () => {
+    // 플레이스홀더 클릭 시 파일 입력 창 띄우기
+    this.placeholder?.addEventListener('click', () => {
+      this.fileInput?.click();
+    });
+
+    // 미리보기 이미지 클릭 시 다시 파일 선택
+    this.previewImg?.addEventListener('click', () => {
       if (!this.isScanning) {
+        this.fileInput?.click();
+      }
+    });
+
+    // 파일 선택 시 미리보기 적용
+    this.fileInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (this.previewImg) {
+            this.previewImg.src = e.target.result;
+            this.previewImg.style.display = 'block';
+          }
+          if (this.placeholder) {
+            this.placeholder.style.display = 'none';
+          }
+          if (this.btnAnalyze) {
+            this.btnAnalyze.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // 분석 버튼 클릭 → AI 분석 시작
+    this.btnAnalyze?.addEventListener('click', () => {
+      if (!this.isScanning && this.previewImg?.src) {
         this.captureAndAnalyze();
       }
     });
 
-    // 카메라 뷰 진입/퇴장 시 스트림 관리
-    // navigateTo에서 호출되도록 전역 이벤트 사용
-    window.addEventListener('hpet_view_enter_cameraAuth', () => this.startCamera());
-    window.addEventListener('hpet_view_leave_cameraAuth', () => this.stopCamera());
+    // 뷰 진입/퇴장 시 초기화
+    window.addEventListener('hpet_view_enter_cameraAuth', () => {
+      this.resetAuthView();
+      this.loadCurrentTarget();
+    });
+    window.addEventListener('hpet_view_leave_cameraAuth', () => this.resetAuthView());
   }
 
-  // ── 웹캠 스트림 시작 ──
-  async startCamera() {
+  // ── 뷰 상태 초기화 ──
+  resetAuthView() {
+    if (this.fileInput) this.fileInput.value = '';
+    if (this.previewImg) {
+      this.previewImg.src = '';
+      this.previewImg.style.display = 'none';
+    }
+    if (this.placeholder) this.placeholder.style.display = 'block';
+    if (this.btnAnalyze) this.btnAnalyze.style.display = 'none';
+    this.isScanning = false;
+  }
+
+  // 카메라 화면에는 인증할 영양제를 고르는 UI가 따로 없어서, 대시보드와 동일한 기준(오늘 아직
+  // 인증 안 된 첫 번째 등록 영양제)으로 인증 대상을 정한다 (GET /api/home/summary 재사용).
+  async loadCurrentTarget() {
+    this.currentSuppId = null;
+    this.currentSuppName = null;
     try {
-      // 이전 스트림이 남아있으면 정리
-      this.stopCamera();
-
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: 640, height: 480 },
-        audio: false
-      });
-
-      if (this.videoEl) {
-        this.videoEl.srcObject = this.stream;
-        this.videoEl.play();
+      const summary = await window.hpetApi.getHomeSummary();
+      const doseList = (summary.doseSummary && summary.doseSummary.doseList) || [];
+      const target = doseList.find(d => !d.completed);
+      if (target) {
+        this.currentSuppId = target.userSupplementId;
+        this.currentSuppName = target.supplementName;
       }
     } catch (err) {
-      console.warn('카메라 접근 실패, 데모 모드로 전환:', err.message);
-      // 카메라 없는 환경(데스크톱 등)에서도 인증 시뮬레이션 가능하도록 처리
-      this.showDemoPlaceholder();
+      console.error('인증 대상 영양제 조회 실패', err);
     }
   }
 
-  // ── 웹캠 스트림 정지 ──
-  stopCamera() {
-    if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
-      this.stream = null;
+  // ── AI 분석 (실제 백엔드 호출) ──
+  async captureAndAnalyze() {
+    if (!this.currentSuppId) {
+      alert('오늘 인증할 영양제가 없습니다. 대시보드에서 영양제를 등록했는지 확인해주세요.');
+      return;
     }
-    if (this.videoEl) {
-      this.videoEl.srcObject = null;
-    }
-  }
 
-  // ── 카메라 없을 때 데모 플레이스홀더 표시 ──
-  showDemoPlaceholder() {
-    const box = document.querySelector('.viewfinder-box');
-    if (!box) return;
+    const file = this.fileInput?.files[0];
+    if (!file) return;
 
-    // 이미 플레이스홀더가 있으면 중복 생성 방지
-    if (box.querySelector('.demo-placeholder')) return;
-
-    const placeholder = document.createElement('div');
-    placeholder.className = 'demo-placeholder';
-    placeholder.innerHTML = `
-      <i class="fa-solid fa-camera-rotate" style="font-size:36px; color:#94a3b8;"></i>
-      <p style="color:#94a3b8; font-size:13px; margin-top:8px;">카메라 미지원 환경</p>
-      <p style="color:#64748b; font-size:11px;">셔터 버튼을 누르면 데모 인증이 진행됩니다</p>
-    `;
-    placeholder.style.cssText = `
-      position:absolute; inset:0; display:flex; flex-direction:column;
-      justify-content:center; align-items:center; background:#1e293b; z-index:1;
-    `;
-    box.appendChild(placeholder);
-  }
-
-  // ── 사진 캡처 & AI 분석 시뮬레이션 ──
-  captureAndAnalyze() {
     this.isScanning = true;
     window.hpetSound.playBeep(1000, 0.06);
 
-    // 1) 캔버스에 현재 프레임 캡처 (실제 카메라가 있을 때)
-    if (this.canvasEl && this.videoEl && this.stream) {
-      this.canvasEl.width = this.videoEl.videoWidth || 640;
-      this.canvasEl.height = this.videoEl.videoHeight || 480;
-      const ctx = this.canvasEl.getContext('2d');
-      ctx.drawImage(this.videoEl, 0, 0);
-    }
-
-    // 2) AI 스캔 오버레이 표시
     const scanOverlay = document.getElementById('ai-scanning-overlay');
     if (scanOverlay) scanOverlay.classList.remove('hidden');
 
-    // 3) 2초 뒤 분석 완료 시뮬레이션 (성공률 85%)
-    setTimeout(() => {
-      const isSuccess = Math.random() < 0.85;
-
+    try {
+      const result = await window.hpetApi.verifyDosePhoto(this.currentSuppId, file);
       if (scanOverlay) scanOverlay.classList.add('hidden');
       this.isScanning = false;
 
-      if (isSuccess) {
-        this.onAuthSuccess();
+      if (result.verified) {
+        this.onAuthSuccess(result);
       } else {
-        this.onAuthFail();
+        this.onAuthFail(result.reason);
       }
-    }, 2200);
+    } catch (err) {
+      if (scanOverlay) scanOverlay.classList.add('hidden');
+      this.isScanning = false;
+      this.onAuthFail(err.message || 'AI 판정 요청에 실패했습니다.');
+    }
   }
 
   // ── 인증 성공 처리 ──
-  onAuthSuccess() {
+  onAuthSuccess(result) {
     window.hpetSound.playSuccess();
 
-    // 아직 인증 안 된 첫 번째 영양제를 자동 인증 처리
-    const state = window.hpetStore.state;
-    const unverified = state.supplements.find(s => !s.takenToday);
-    if (unverified) {
-      window.hpetStore.markSupplementTaken(unverified.id);
+    // 포션 애니메이션 재생 (4초 후 원래대로)
+    if (window.hpetCharacter) {
+      window.hpetCharacter.playMotion('Potion', 4000);
     }
 
-    // 보상 모달 표시
+    // 보상 모달 표시 (실제 응답의 획득 포인트를 그대로 사용)
     const rewardTitle = document.getElementById('reward-title');
     const rewardDesc = document.getElementById('reward-desc');
     const rewardIcon = document.getElementById('reward-icon');
@@ -139,27 +151,25 @@ class HPetSupplementAuth {
 
     if (rewardTitle) rewardTitle.textContent = '복용 인증 성공!';
     if (rewardDesc) {
-      const suppName = unverified ? unverified.name : '영양제';
-      rewardDesc.textContent = `${suppName} 복용이 확인되었습니다! 포션 +20 획득 🧪`;
+      const suppName = this.currentSuppName || '영양제';
+      rewardDesc.textContent = `${suppName} 복용이 확인되었습니다! 성장치 +${result.pointsGainedThisTime} (오늘 ${result.todayEarnedPoints}/${result.dailyMaxPoints}) 🧪`;
     }
     if (rewardIcon) rewardIcon.textContent = '🧪';
     if (modal) modal.classList.remove('hidden');
 
     // 보상 모달 닫힘 시 대시보드로 복귀
     const closeBtn = document.getElementById('btn-close-reward');
-    const originalHandler = closeBtn?.onclick;
-
     if (closeBtn) {
       closeBtn.onclick = () => {
         modal.classList.add('hidden');
-        this.stopCamera();
+        this.resetAuthView();
         window.hpetRouter.navigateTo('dashboard');
       };
     }
   }
 
   // ── 인증 실패 처리 ──
-  onAuthFail() {
+  onAuthFail(reason) {
     window.hpetSound.playBeep(220, 0.2, 'sawtooth');
 
     const rewardTitle = document.getElementById('reward-title');
@@ -168,7 +178,7 @@ class HPetSupplementAuth {
     const modal = document.getElementById('modal-reward');
 
     if (rewardTitle) rewardTitle.textContent = '인증 실패 😢';
-    if (rewardDesc) rewardDesc.textContent = '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
+    if (rewardDesc) rewardDesc.textContent = reason || '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
     if (rewardIcon) rewardIcon.textContent = '📷';
     if (modal) modal.classList.remove('hidden');
 
