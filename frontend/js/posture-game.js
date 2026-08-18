@@ -4,6 +4,13 @@
  * 웹캠 기반 자세 측정 시뮬레이션, 거북목 경고 모달, 교정 타이머 게임
  */
 
+// 백엔드는 LocalDateTime(타임존 없는 "YYYY-MM-DDTHH:mm:ss")을 기대하므로,
+// Date.toISOString()의 UTC/밀리초/Z 표기를 쓰지 않고 로컬 시각 기준으로 직접 포맷한다.
+function toLocalIsoString(date) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 class HPetPostureGame {
   constructor() {
     this.stream = null;
@@ -145,6 +152,11 @@ class HPetPostureGame {
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(true);
       }
+
+      // 판정된 순간을 실제 백엔드에 기록 (게임 템포를 막지 않도록 결과를 기다리지 않음).
+      // 사진 한 장 기반 판정과 동일하게 각도/지속시간은 측정 불가라 0으로 남긴다.
+      window.hpetApi.createPostureEvent(toLocalIsoString(new Date()), 0, 0)
+        .catch(err => console.error('자세 불량 이벤트 기록 실패', err));
 
       // 2초 뒤 경고 배너 자동 숨김
       setTimeout(() => {
