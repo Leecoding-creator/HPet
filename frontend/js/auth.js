@@ -21,6 +21,58 @@ class HPetAuthManager {
       this.showForgotPwModal();
     });
 
+    // 1단계: 이메일로 재설정 토큰 요청
+    document.getElementById('btn-request-reset')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const emailInput = document.getElementById('forgot-pw-email');
+      const errEl = document.getElementById('forgot-pw-request-error');
+      const email = emailInput.value.trim();
+
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      try {
+        await window.hpetApi.requestPasswordReset(email);
+        window.hpetSound.playSuccess();
+        document.getElementById('forgot-pw-step1').classList.add('hidden');
+        document.getElementById('forgot-pw-step2').classList.remove('hidden');
+      } catch (err) {
+        errEl.textContent = err.message || '재설정 요청에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // 2단계: 토큰 + 새 비밀번호로 실제 재설정
+    document.getElementById('btn-confirm-reset')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const token = document.getElementById('forgot-pw-token').value.trim();
+      const newPassword = document.getElementById('forgot-pw-new-password').value;
+      const errEl = document.getElementById('forgot-pw-confirm-error');
+
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      try {
+        await window.hpetApi.confirmPasswordReset(token, newPassword);
+        window.hpetSound.playSuccess();
+        alert('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
+        document.getElementById('modal-forgot-pw').classList.add('hidden');
+      } catch (err) {
+        errEl.textContent = err.message || '비밀번호 재설정에 실패했습니다.';
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // 취소 버튼 (1단계/2단계 공통 - 모달 닫기)
+    document.getElementById('btn-cancel-forgot-pw')?.addEventListener('click', () => {
+      document.getElementById('modal-forgot-pw').classList.add('hidden');
+    });
+    document.getElementById('btn-cancel-forgot-pw-2')?.addEventListener('click', () => {
+      document.getElementById('modal-forgot-pw').classList.add('hidden');
+    });
+
     // 권한 요청 동의 버튼들
     document.getElementById('btn-grant-permissions')?.addEventListener('click', () => {
       this.grantAllPermissions();
@@ -29,7 +81,18 @@ class HPetAuthManager {
 
   showForgotPwModal() {
     const modal = document.getElementById('modal-forgot-pw');
-    if (modal) modal.classList.remove('hidden');
+    if (!modal) return;
+
+    // 모달을 열 때마다 1단계로 초기화 (이전 시도의 입력값/에러 잔상 제거)
+    document.getElementById('forgot-pw-step1').classList.remove('hidden');
+    document.getElementById('forgot-pw-step2').classList.add('hidden');
+    document.getElementById('forgot-pw-email').value = '';
+    document.getElementById('forgot-pw-token').value = '';
+    document.getElementById('forgot-pw-new-password').value = '';
+    document.getElementById('forgot-pw-request-error').classList.add('hidden');
+    document.getElementById('forgot-pw-confirm-error').classList.add('hidden');
+
+    modal.classList.remove('hidden');
   }
 
   showPermissionModal(onComplete) {

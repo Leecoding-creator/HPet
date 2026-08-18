@@ -137,6 +137,14 @@ class HPetApiClient {
     return data;
   }
 
+  requestPasswordReset(email) {
+    return this.request('POST', '/api/auth/password-reset/request', { body: { email }, auth: false });
+  }
+
+  confirmPasswordReset(token, newPassword) {
+    return this.request('POST', '/api/auth/password-reset/confirm', { body: { token, newPassword }, auth: false });
+  }
+
   async logout() {
     try {
       await this.request('POST', '/api/auth/logout', {});

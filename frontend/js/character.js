@@ -264,6 +264,15 @@ class HPetCharacterEngine {
 
     if (btnCloset) {
       btnCloset.addEventListener('click', () => {
+        // 옷장 미리보기 캐릭터 이미지를 메인 화면과 동일한 기준(characterCode/성장단계)으로 동기화.
+        // main-pet-img는 dashboard.js가 이미 getCharacterImagePath()로 채워둔 상태이므로 그대로 재사용한다.
+        const mainImg = document.getElementById('main-pet-img');
+        const closetImg = document.getElementById('closet-preview-char-img');
+        if (mainImg && closetImg) {
+          closetImg.src = mainImg.src;
+          closetImg.alt = mainImg.alt;
+        }
+
         // 현재 장착중인 아이템을 임시 선택 상태로 복사
         this.tempEquipped = [...(window.hpetStore.state.pet.equippedItems || [])];
         this.renderCloset();
