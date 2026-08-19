@@ -185,6 +185,15 @@ class HPetDashboardManager {
         if (headerName) headerName.textContent = `${window.hpetStore.state.user.name}님`;
       }
 
+      const headerStreak = document.getElementById('header-streak');
+      const badgeContainer = document.getElementById('streak-badge-container');
+      if (summary.doseSummary && summary.doseSummary.consecutiveDays > 0) {
+        if (headerStreak) headerStreak.textContent = summary.doseSummary.consecutiveDays;
+        if (badgeContainer) badgeContainer.style.display = '';
+      } else {
+        if (badgeContainer) badgeContainer.style.display = 'none';
+      }
+
       this.renderCharacter(summary.characterSummary);
       this.renderMissions(summary.doseSummary);
       this.renderPosture(summary.postureSummary);
@@ -229,7 +238,7 @@ class HPetDashboardManager {
     const growthPercent = Math.max(0, Math.min(100, Math.round((characterSummary.growthPoints / maxPoints) * 100)));
 
     if (nameEl) nameEl.textContent = characterSummary.characterName;
-    if (levelEl) levelEl.textContent = `Lv.${stageIdx} ${stageLabel}`;
+    if (levelEl) levelEl.textContent = `Lv.${stageIdx}`;
     if (growthBar) growthBar.style.width = `${growthPercent}%`;
     if (growthText) growthText.innerHTML = `<strong>${characterSummary.growthPoints}</strong> / ${maxPoints} (${growthPercent}%)`;
     if (mainImg) {

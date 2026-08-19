@@ -38,7 +38,7 @@
           </div>
           <div class="user-meta">
             <span class="user-name" id="header-username">김하늘님</span>
-            <span class="streak-badge"><i class="fa-solid fa-fire"></i> <span id="header-streak">3</span>일째 복용 중</span>
+            <span class="streak-badge" id="streak-badge-container"><i class="fa-solid fa-fire"></i> <span id="header-streak">3</span>일째 복용 중</span>
           </div>
         </div>
         <div class="header-actions" style="display: flex; gap: 8px;">
@@ -67,12 +67,12 @@
           <form id="form-login" class="auth-form">
             <label class="form-label">이메일</label>
             <div class="input-group">
-              <input type="email" id="login-email" placeholder="example@email.com" value="sky@hpet.io" required>
+              <input type="email" id="login-email" placeholder="example@email.com" required>
             </div>
             
             <label class="form-label">비밀번호</label>
             <div class="input-group">
-              <input type="password" id="login-password" placeholder="비밀번호 입력" value="••••••••" required>
+              <input type="password" id="login-password" placeholder="비밀번호 입력" required>
               <button type="button" class="password-toggle" aria-label="비밀번호 표시">
                 <i class="fa-solid fa-eye-slash"></i>
               </button>
@@ -335,7 +335,7 @@
             <div id="upload-placeholder" style="text-align: center; cursor: pointer; padding: 40px; border: 2px dashed #475569; border-radius: 12px; margin: 20px;">
                <i class="fa-solid fa-image" style="font-size: 36px; color: #94a3b8;"></i>
                <p style="color: #94a3b8; font-size: 14px; margin-top: 12px; font-weight: 500;">터치하여 사진 업로드</p>
-               <p style="color: #64748b; font-size: 11px; margin-top: 6px;">영양제 라벨이 잘 보이게 찍어주세요</p>
+               <p style="color: #64748b; font-size: 11px; margin-top: 6px;">오늘 복용할 영양제를 한 번에 모아서 찍어주세요</p>
             </div>
             
             <div class="ai-scanning-overlay hidden" id="ai-scanning-overlay">
@@ -380,7 +380,10 @@
 
           <div class="game-instructions">
             <p><i class="fa-solid fa-circle-info"></i> 올바른 자세를 30초간 유지하면 <strong>성장 포션 +50</strong> 보상을 받습니다!</p>
-            <button id="btn-start-posture-game" class="btn btn-primary btn-block glow">미니게임 시작</button>
+            <div style="display: flex; gap: 8px;">
+              <button id="btn-start-posture-game" class="btn btn-primary btn-block glow" style="flex: 1;">미니게임 시작</button>
+              <button id="btn-stop-posture-game" class="btn btn-secondary btn-block hidden" style="flex: 1; margin-top: 0; background: #e2e8f0; color: #475569;">게임 중지</button>
+            </div>
           </div>
         </div>
       </section>

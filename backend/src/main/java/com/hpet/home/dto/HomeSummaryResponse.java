@@ -27,16 +27,19 @@ public class HomeSummaryResponse {
     public static class DoseSummary {
         private final int totalSupplementCount;
         private final int completedCount;
+        private final int consecutiveDays;
         private final List<DoseItem> doseList;
 
-        public DoseSummary(int totalSupplementCount, int completedCount, List<DoseItem> doseList) {
+        public DoseSummary(int totalSupplementCount, int completedCount, int consecutiveDays, List<DoseItem> doseList) {
             this.totalSupplementCount = totalSupplementCount;
             this.completedCount = completedCount;
+            this.consecutiveDays = consecutiveDays;
             this.doseList = doseList;
         }
 
         public int getTotalSupplementCount() { return totalSupplementCount; }
         public int getCompletedCount() { return completedCount; }
+        public int getConsecutiveDays() { return consecutiveDays; }
         public List<DoseItem> getDoseList() { return doseList; }
     }
 
