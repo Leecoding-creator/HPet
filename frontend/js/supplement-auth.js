@@ -1,7 +1,10 @@
 /**
  * HPet - 영양제 AI 카메라 촬영 인증 & 포션 보상 시스템 (Stage 5)
- * 
- * 웹캠 바인딩, 사진 캡처, AI 스캔 시뮬레이션, 포션 보상 지급 처리
+ *
+ * ⚠️ 팀 확정(2026-08-19, 준호님): "영양제별로 따로 안 하고 통째로(전체) 인증"으로 변경.
+ * 오늘 먹을 영양제를 전부 한 사진에 모아서 촬영하면, 서버가 AI로 알약 개수를 세서
+ * 등록 개수(n) 대비 몇 개를 인증했는지 판정한다. 그래서 더 이상 "인증 대상 영양제 하나"를
+ * 미리 찾아둘 필요가 없다 (currentSuppId 관련 로직 전부 제거).
  */
 
 class HPetSupplementAuth {
@@ -11,7 +14,6 @@ class HPetSupplementAuth {
     this.placeholder = null;      // 업로드 안내 영역
     this.btnAnalyze = null;       // 분석 버튼
     this.isScanning = false;      // AI 분석 진행 중 여부
-    this.currentSuppId = null;    // 현재 인증 대상 영양제 ID
   }
 
   init() {
@@ -66,7 +68,6 @@ class HPetSupplementAuth {
     // 뷰 진입/퇴장 시 초기화
     window.addEventListener('hpet_view_enter_cameraAuth', () => {
       this.resetAuthView();
-      this.loadCurrentTarget();
     });
     window.addEventListener('hpet_view_leave_cameraAuth', () => this.resetAuthView());
   }
@@ -83,31 +84,8 @@ class HPetSupplementAuth {
     this.isScanning = false;
   }
 
-  // 카메라 화면에는 인증할 영양제를 고르는 UI가 따로 없어서, 대시보드와 동일한 기준(오늘 아직
-  // 인증 안 된 첫 번째 등록 영양제)으로 인증 대상을 정한다 (GET /api/home/summary 재사용).
-  async loadCurrentTarget() {
-    this.currentSuppId = null;
-    this.currentSuppName = null;
-    try {
-      const summary = await window.hpetApi.getHomeSummary();
-      const doseList = (summary.doseSummary && summary.doseSummary.doseList) || [];
-      const target = doseList.find(d => !d.completed);
-      if (target) {
-        this.currentSuppId = target.userSupplementId;
-        this.currentSuppName = target.supplementName;
-      }
-    } catch (err) {
-      console.error('인증 대상 영양제 조회 실패', err);
-    }
-  }
-
   // ── AI 분석 (실제 백엔드 호출) ──
   async captureAndAnalyze() {
-    if (!this.currentSuppId) {
-      alert('오늘 인증할 영양제가 없습니다. 대시보드에서 영양제를 등록했는지 확인해주세요.');
-      return;
-    }
-
     const file = this.fileInput?.files[0];
     if (!file) return;
 
@@ -118,7 +96,8 @@ class HPetSupplementAuth {
     if (scanOverlay) scanOverlay.classList.remove('hidden');
 
     try {
-      const result = await window.hpetApi.verifyDosePhoto(this.currentSuppId, file);
+      // 오늘 등록된 영양제 전체를 한 사진으로 인증 (userSupplementId 지정 안 함)
+      const result = await window.hpetApi.verifyDosePhoto(file);
       if (scanOverlay) scanOverlay.classList.add('hidden');
       this.isScanning = false;
 
@@ -151,8 +130,10 @@ class HPetSupplementAuth {
 
     if (rewardTitle) rewardTitle.textContent = '복용 인증 성공!';
     if (rewardDesc) {
-      const suppName = this.currentSuppName || '영양제';
-      rewardDesc.textContent = `${suppName} 복용이 확인되었습니다! 성장치 +${result.pointsGainedThisTime} (오늘 ${result.todayEarnedPoints}/${result.dailyMaxPoints}) 🧪`;
+      // 개별 영양제 이름 대신, "오늘 n개 중 몇 개 인증됐는지"로 표시 (전체인증 방식이라 어떤
+      // 영양제인지는 AI가 구별하지 않음)
+      rewardDesc.textContent = `오늘 ${result.requiredCountToday}개 중 ${result.verifiedCountToday}개 인증 완료! `
+        + `성장치 +${result.pointsGainedThisTime} (오늘 ${result.todayEarnedPoints}/${result.dailyMaxPoints}) 🧪`;
     }
     if (rewardIcon) rewardIcon.textContent = '🧪';
     if (modal) modal.classList.remove('hidden');
