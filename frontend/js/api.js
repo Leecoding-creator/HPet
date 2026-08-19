@@ -209,15 +209,17 @@ class HPetApiClient {
   }
 
   // 영양제 사진 인증
-  verifyDosePhoto(userSupplementId, imageFile) {
+  // 팀 확정(2026-08-19): 영양제별로 따로 인증하는 게 아니라, 오늘 등록한 영양제를 전부
+  // 한 사진에 모아서 한 번에 인증(AI가 알약 개수를 셈)하는 방식으로 변경됨.
+  // 그래서 더 이상 userSupplementId를 지정하지 않는다.
+  verifyDosePhoto(imageFile) {
     const formData = new FormData();
-    formData.append('userSupplementId', userSupplementId);
     formData.append('image', imageFile);
     return this.requestMultipart('POST', '/api/dose-verification/photo', formData);
   }
 
-  getDoseVerificationStatus(userSupplementId) {
-    return this.request('GET', `/api/dose-verification/status?userSupplementId=${userSupplementId}`);
+  getDoseVerificationStatus() {
+    return this.request('GET', '/api/dose-verification/status');
   }
 
   // 복용 기록 (히스토리 캘린더용)

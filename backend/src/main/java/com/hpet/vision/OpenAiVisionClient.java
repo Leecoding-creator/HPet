@@ -57,11 +57,17 @@ public class OpenAiVisionClient implements AiVisionClient {
     }
 
     @Override
-    public VisionJudgement judge(byte[] imageBytes, String mimeType, String supplementName) {
-        String prompt = "이 사진이 사용자가 '" + supplementName + "'(영양제/보충제)를 실제로 복용하고 있거나 "
-                + "복용 직전 준비된 모습(예: 손이나 입 근처에 해당 영양제가 보이는 상태)을 보여주는지 판정해줘. "
+    public VisionJudgement judgePillCount(byte[] imageBytes, String mimeType) {
+        // 팀 확정(2026-08-19, 준호님): "영양제별로 따로 안 하고 통째로(전체) 인증"으로 확정.
+        // AI는 알약 색깔로 대강 짐작만 가능하지 정확히 무슨 영양제인지는 구별 못하므로,
+        // 구별하려 하지 않고 "몇 개 보이는지"만 정확히 센다.
+        String prompt = "이 사진에서 사용자가 알약(영양제/보충제)들을 손에 들고 있거나, 입에 넣거나, "
+                + "복용 직전 준비된 모습인지 확인하고, 보이는 알약의 개수를 정확히 세어줘. "
+                + "무슨 영양제인지(색깔/모양으로 성분을 맞히는 것)는 판단하지 않아도 되고, 개수만 정확히 세는 게 중요해. "
+                + "알약이 하나도 안 보이면 success는 false, 1개 이상 보이면 true로 해줘. "
                 + "반드시 아래 JSON 형식으로만 답해. 다른 텍스트는 절대 포함하지 마: "
-                + "{\"success\": true 또는 false, \"reason\": \"판단 근거를 한국어로 한 문장\"}";
+                + "{\"success\": true 또는 false, \"pillCount\": 보이는 알약 개수(정수), "
+                + "\"reason\": \"판단 근거를 한국어로 한 문장 (예: 알약 2개를 손에 들고 있음)\"}";
         return callVisionApi(imageBytes, mimeType, prompt);
     }
 
@@ -78,7 +84,7 @@ public class OpenAiVisionClient implements AiVisionClient {
     private VisionJudgement callVisionApi(byte[] imageBytes, String mimeType, String prompt) {
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("OPENAI_API_KEY가 설정되지 않아 AI 판정을 건너뜁니다.");
-            return new VisionJudgement(false, "OpenAI API 키가 설정되지 않았습니다. 환경변수 OPENAI_API_KEY를 확인해주세요.");
+            return new VisionJudgement(false, "OpenAI API 키가 설정되지 않았습니다. 환경변수 OPENAI_API_KEY를 확인해주세요.", 0);
         }
 
         // 팀 피드백 반영: 원본을 그대로 보내면 토큰(비용)이 많이 나가서, API 호출 직전에 축소한다.
@@ -108,16 +114,16 @@ public class OpenAiVisionClient implements AiVisionClient {
 
                 // 429(rate limit), 5xx는 재시도 가치가 있고 4xx(키 오류 등)는 재시도해도 소용없음
                 if (response.statusCode() < 500 && response.statusCode() != 429) {
-                    return new VisionJudgement(false, "AI 판정 요청이 거부되었습니다 (status=" + response.statusCode() + ")");
+                    return new VisionJudgement(false, "AI 판정 요청이 거부되었습니다 (status=" + response.statusCode() + ")", 0);
                 }
             } catch (Exception e) {
                 log.warn("OpenAI Vision API 호출 중 오류 (attempt={}): {}", attempt, e.getMessage());
                 if (attempt == MAX_ATTEMPTS) {
-                    return new VisionJudgement(false, "AI 판정 서버 호출에 실패했습니다: " + e.getMessage());
+                    return new VisionJudgement(false, "AI 판정 서버 호출에 실패했습니다: " + e.getMessage(), 0);
                 }
             }
         }
-        return new VisionJudgement(false, "AI 판정에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return new VisionJudgement(false, "AI 판정에 실패했습니다. 잠시 후 다시 시도해주세요.", 0);
     }
 
     private String buildRequestBody(byte[] imageBytes, String mimeType, String prompt) {
@@ -154,10 +160,11 @@ public class OpenAiVisionClient implements AiVisionClient {
             JsonNode judgementNode = objectMapper.readTree(content);
             boolean success = judgementNode.path("success").asBoolean(false);
             String reason = judgementNode.path("reason").asText("판정 사유가 제공되지 않았습니다.");
-            return new VisionJudgement(success, reason);
+            int pillCount = judgementNode.path("pillCount").asInt(0);
+            return new VisionJudgement(success, reason, pillCount);
         } catch (Exception e) {
             log.warn("AI 응답 파싱 실패: {}", e.getMessage());
-            return new VisionJudgement(false, "AI 응답을 해석하지 못했습니다.");
+            return new VisionJudgement(false, "AI 응답을 해석하지 못했습니다.", 0);
         }
     }
 

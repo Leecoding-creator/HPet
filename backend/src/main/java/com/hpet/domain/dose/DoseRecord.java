@@ -40,6 +40,11 @@ public class DoseRecord {
     // 인증 사진 저장 URL. PHOTO 인증 성공 시에만 채워진다 (MANUAL 체크는 사진이 없어서 null).
     private String imageUrl;
 
+    // 사진 부정 재사용 방지용 지문(SHA-256 해시). 같은 사진 파일을 다른 날짜에 다시 올려서
+    // 인증받으려는 걸 감지하기 위해 저장한다 (준호님 확정, 2026-08-19: "같은 사진 재사용 안 했는지만 체크").
+    @Column(length = 64)
+    private String imageHash;
+
     protected DoseRecord() {
         // JPA
     }
@@ -59,6 +64,10 @@ public class DoseRecord {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public void setImageHash(String imageHash) {
+        this.imageHash = imageHash;
     }
 
     public Long getId() {
@@ -91,5 +100,9 @@ public class DoseRecord {
 
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public String getImageHash() {
+        return imageHash;
     }
 }

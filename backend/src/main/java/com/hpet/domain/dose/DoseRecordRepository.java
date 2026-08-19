@@ -28,4 +28,8 @@ public interface DoseRecordRepository extends JpaRepository<DoseRecord, Long> {
     // 히스토리 캘린더 조회용 - 기간(startDate~endDate)으로 조회.
     // (원래 findByUserIdAndDoseDate 하루치만 있었는데, 캘린더 화면에서 한 달치를 한 번에 봐야 해서 추가함)
     List<DoseRecord> findByUserIdAndDoseDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
+
+    // 사진 부정 재사용 방지 (준호님 확정, 2026-08-19): 이 사용자가 "오늘이 아닌 다른 날짜"에
+    // 이미 이 사진(해시)을 써서 인증한 적이 있는지 확인한다. 있으면 재사용으로 판단하고 거절한다.
+    boolean existsByUserIdAndImageHashAndDoseDateNot(Long userId, String imageHash, LocalDate excludeDoseDate);
 }
