@@ -3,7 +3,7 @@
  * 백엔드는 { "success": true, "data": {...} } / { "success": false, "error": {...} } 포맷으로 응답한다.
  */
 
-const HPET_API_BASE = 'http://localhost:8080';
+const HPET_API_BASE = 'https://1.201.117.185';
 const HPET_TOKEN_KEY = 'HPET_ACCESS_TOKEN';
 const HPET_REFRESH_KEY = 'HPET_REFRESH_TOKEN';
 
