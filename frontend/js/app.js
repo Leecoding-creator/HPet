@@ -505,6 +505,15 @@ const HPetUI = {
       });
     });
 
+    // auth 뷰 진입 시 항상 로그인 창을 기본으로 표시하도록 초기화 (로그아웃 시 회원가입 창이 뜨는 문제 해결)
+    window.addEventListener('hpet_view_enter_auth', () => {
+      document.getElementById('login-container').classList.remove('hidden');
+      document.getElementById('signup-container').classList.add('hidden');
+      // 혹시 탭 버튼(상단)이 남아있다면 상태 동기화
+      document.querySelectorAll('.auth-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.auth-tabs .tab-btn[data-tab="login"]')?.classList.add('active');
+    });
+
     // 상단 뒤로가기 버튼
     document.querySelectorAll('.retro-back-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {

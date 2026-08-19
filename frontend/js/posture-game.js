@@ -32,10 +32,14 @@ class HPetPostureGame {
     document.getElementById('btn-start-posture-game')?.addEventListener('click', () => {
       if (!this.isPlaying) this.startGame();
     });
+    // 미니게임 중지 버튼
+    document.getElementById('btn-stop-posture-game')?.addEventListener('click', () => {
+      if (this.isPlaying) this.resetGame();
+    });
 
     // 카메라 뷰 진입/퇴장 시 스트림 관리
     window.addEventListener('hpet_view_enter_postureGame', () => this.startPostureCamera());
-    window.addEventListener('hpet_view_leave_postureGame', () => this.stopGame());
+    window.addEventListener('hpet_view_leave_postureGame', () => this.resetGame());
   }
 
   // ── 자세 게임용 웹캠 시작 ──
@@ -87,12 +91,14 @@ class HPetPostureGame {
     setTimeout(() => window.hpetSound.playBeep(659.25, 0.1), 150);
     setTimeout(() => window.hpetSound.playBeep(783.99, 0.15), 300);
 
-    // 시작 버튼 비활성화
+    // 시작 버튼 비활성화 및 중지 버튼 표시
     const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
     if (startBtn) {
-      startBtn.textContent = '게임 진행 중...';
-      startBtn.disabled = true;
-      startBtn.style.opacity = '0.6';
+      startBtn.classList.add('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.remove('hidden');
     }
 
     // 타이머 카운트다운
@@ -190,10 +196,15 @@ class HPetPostureGame {
 
     // 시작 버튼 복원
     const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
     if (startBtn) {
       startBtn.innerHTML = '미니게임 다시 시작';
       startBtn.disabled = false;
       startBtn.style.opacity = '1';
+      startBtn.classList.remove('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.add('hidden');
     }
 
     // 거북목 감지가 3회 미만이면 성공 판정
@@ -276,6 +287,39 @@ class HPetPostureGame {
     if (this.videoEl) {
       this.videoEl.srcObject = null;
     }
+  }
+
+  // ── 게임 초기화 (중지 버튼 클릭 혹은 뷰 이탈 시) ──
+  resetGame() {
+    this.stopGame();
+
+    this.remainSeconds = 30;
+    this.updateTimerDisplay();
+
+    // 시작/중지 버튼 토글
+    const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
+    if (startBtn) {
+      startBtn.textContent = '미니게임 시작';
+      startBtn.disabled = false;
+      startBtn.style.opacity = '1';
+      startBtn.classList.remove('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.add('hidden');
+    }
+
+    // 상태 초기화
+    const indicator = document.getElementById('posture-indicator');
+    const statusText = document.getElementById('posture-status-text');
+    const turtleBanner = document.getElementById('turtle-warning');
+
+    if (indicator) {
+      indicator.className = 'status-indicator good';
+      indicator.querySelector('i').className = 'fa-solid fa-face-smile';
+    }
+    if (statusText) statusText.textContent = '바른 자세 유지 중!';
+    if (turtleBanner) turtleBanner.classList.add('hidden');
   }
 }
 

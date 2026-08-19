@@ -117,5 +117,7 @@ public class User {
     public void markDeleted() {
         this.deletedAt = LocalDateTime.now();
         this.refreshToken = null;
+        // 탈퇴 시 이메일 Unique 제약조건 충돌을 방지하기 위해 이메일 뒤에 타임스탬프를 붙여 변경합니다.
+        this.email = this.email + "_deleted_" + System.currentTimeMillis();
     }
 }
