@@ -54,6 +54,7 @@ class HPetProfileManager {
           await window.hpetApi.logout().catch(err => console.error('로그아웃 요청 실패', err));
           window.hpetStore.state.user.isLoggedIn = false;
           window.hpetStore.saveState();
+          document.getElementById('modal-settings')?.classList.add('hidden');
           window.hpetRouter.navigateTo('auth');
         }
       });
