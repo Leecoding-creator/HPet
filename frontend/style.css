@@ -173,16 +173,12 @@ body {
    ========================================================================== */
 .mobile-frame {
   width: 100%;
-  max-width: 400px;
-  /* 고정 860px 대신 내부 콘텐츠의 실제 높이만큼만 차지한다. height:auto는 flex-direction:column
-     컨테이너를 자식들의 자연스러운 총 높이로 맞추고(콘텐츠가 화면보다 작으면 프레임 자체가
-     그만큼 작아져 카드-네비게이션 사이에 불필요한 빈 공간이 남지 않음), max-height:95vh가
-     그 이상은 못 커지게 캡을 걸어 콘텐츠가 넘칠 때 내부(.app-scroll-area)가 스크롤되도록 한다.
-     min-height는 콘텐츠가 극히 적을 때 프레임이 지나치게 쪼그라드는 것만 막는 최소 바닥값.
-     (height:fit-content(95vh) 함수형 값은 iOS Safari/Android Chrome에서 지원되지 않아
-     제외했다 — auto+max-height+min-height 조합은 모든 브라우저에서 안정적으로 지원됨) */
-  height: auto;
-  min-height: 480px;
+  max-width: 390px;
+  /* 진짜 스마트폰처럼 액자 크기는 화면(콘텐츠)에 상관없이 항상 고정(아이폰 표준: 390x844).
+     콘텐츠가 짧으면 .app-scroll-area 아래에 여백이 남고, 길면 .app-scroll-area가 내부
+     스크롤을 담당한다. max-height:95vh는 노트북 등 작은 뷰포트에서 액자가 화면 밖으로
+     넘치지 않도록 하는 캡. */
+  height: 844px;
   max-height: 95vh;
   background: var(--bg-main);
   border-radius: 44px;
@@ -415,6 +411,13 @@ body {
    VIEW 1: 로그인 / 회원가입 — Pill & Pose 스타일
    반가워요! 헤딩 + 크림 배경 + 소셜 로그인
    ========================================================================== */
+#view-auth {
+  /* #view-dashboard와 동일한 이유로 overflow:visible 필요 (아래 #view-dashboard 주석 참고).
+     .view-section의 기본 overflow:hidden을 그대로 두면 회원가입 폼처럼 콘텐츠가 액자보다
+     길어졌을 때 스크롤되지 않고 하단이 그대로 잘려나간다. */
+  overflow: visible;
+}
+
 .splash-hero {
   flex: 1;
   display: flex;
