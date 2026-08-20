@@ -425,8 +425,13 @@ class HPetCharacterEngine {
           // 장착 해제
           this.tempEquipped = this.tempEquipped.filter(i => i !== id);
         } else {
-          // 1개씩만 적용되도록 기존 아이템 초기화 후 추가
-          this.tempEquipped = [id];
+          // 슬롯(item.type: head/face)당 1개씩만 적용되도록 같은 슬롯의 기존 아이템만 교체한다.
+          // 슬롯이 다른 아이템(리본=head, 선글라스=face)은 서로 방해하지 않고 동시 장착된다.
+          this.tempEquipped = this.tempEquipped.filter(existingId => {
+            const existingItem = this.availableItems.find(i => i.id === existingId);
+            return existingItem && existingItem.type !== itemDef.type;
+          });
+          this.tempEquipped.push(id);
         }
         
         this.renderCloset();
@@ -478,7 +483,6 @@ class HPetCharacterEngine {
     if (html) {
       layer.innerHTML = html;
       layer.style.display = 'block';
-      layer.style.zIndex = '5';
     } else {
       layer.innerHTML = '';
       layer.style.display = 'none';
