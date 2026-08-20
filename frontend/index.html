@@ -272,11 +272,25 @@
             오늘도<br>잘 부탁해!<br>❤️
           </div>
           <div class="character-wrapper" id="pet-character-wrapper" style="position: relative;">
-            <!-- JS 렌더 전 기본 이미지 (dashboard.js renderCharacter가 실제 캐릭터로 교체함) -->
-            <img src="assets/characters/CHICK/1.png" alt="토비" class="main-character-img bounce-animation" id="main-pet-img">
-            <!-- 장착 아이템 오버레이 레이어 -->
-            <div id="equipped-item-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+            <!-- 캐릭터와 장착 아이템을 하나의 부모(pet-visual-anchor)에 묶어 bounce 애니메이션을 부모에서만
+                 재생한다. 아이템은 이 부모의 좌표계 안에서 정적으로 배치되므로, 부모가 움직이면
+                 별도 동기화 없이 항상 같은 프레임에서 함께 움직인다. -->
+            <div class="pet-visual-anchor bounce-animation" id="pet-visual-anchor">
+              <!-- JS 렌더 전 기본 이미지 (dashboard.js renderCharacter가 실제 캐릭터로 교체함) -->
+              <img src="assets/characters/CHICK/1.png" alt="토비" class="main-character-img" id="main-pet-img">
+              <!-- 장착 아이템 오버레이 레이어 -->
+              <div id="equipped-item-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+            </div>
           </div>
+        </div>
+
+        <!-- 베타테스트 데모: 성장단계(1~4) 화면 미리보기. 순수 화면 표시용이며 실제 growthPoints/DB는
+             건드리지 않는다 (character.js의 previewStageOverride). 새로고침하면 실제 단계로 복귀. -->
+        <div class="stage-preview-toggle" id="stage-preview-toggle">
+          <button type="button" class="stage-preview-btn" data-stage="1">1</button>
+          <button type="button" class="stage-preview-btn" data-stage="2">2</button>
+          <button type="button" class="stage-preview-btn" data-stage="3">3</button>
+          <button type="button" class="stage-preview-btn" data-stage="4">4</button>
         </div>
 
         <!-- 하단 카드 영역 -->
@@ -636,9 +650,16 @@
           
           <!-- 미리보기 영역 -->
           <div class="closet-preview-area" style="background: var(--bg-main); border-radius: 12px; padding: 20px; text-align: center; position: relative; margin-bottom: 16px;">
-            <div style="position: relative; display: inline-block; width: 120px; height: 120px;">
-              <img id="closet-preview-char-img" src="assets/characters/CHICK/1.png" alt="preview" style="width: 100%; height: 100%; object-fit: contain;">
-              <div id="closet-preview-item" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; font-size: 60px; line-height: 120px; display: none;"></div>
+            <!-- 메인 화면(#pet-character-wrapper > #pet-visual-anchor)과 완전히 동일한 클래스 구조를
+                 그대로 재사용하고, 120px 미리보기 슬롯에 맞춰 scale()로만 축소한다. scale()은 내부
+                 %기반 위치 계산에 영향을 주지 않으므로 위치 값이 두 화면에서 항상 일치한다. -->
+            <div class="closet-preview-scale">
+              <div class="character-wrapper" id="closet-preview-wrapper" style="position: relative;">
+                <div class="pet-visual-anchor" id="closet-preview-anchor">
+                  <img id="closet-preview-char-img" src="assets/characters/CHICK/1.png" alt="preview" class="main-character-img">
+                  <div id="closet-preview-item" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none;"></div>
+                </div>
+              </div>
             </div>
           </div>
 
