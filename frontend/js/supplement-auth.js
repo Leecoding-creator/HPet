@@ -114,12 +114,19 @@ class HPetSupplementAuth {
   }
 
   // ── 인증 성공 처리 ──
+  // 성공/실패 판정은 이 함수가 호출되는 시점(백엔드 응답의 verified 필드)에서 이미 끝난
+  // 상태이므로, 아래 캐릭터 모션 재생이 실패하더라도 보상 모달 표시는 항상 진행되어야 한다.
   onAuthSuccess(result) {
     window.hpetSound.playSuccess();
 
-    // 포션 애니메이션 재생 (4초 후 원래대로)
-    if (window.hpetCharacter) {
-      window.hpetCharacter.playMotion('Potion', 4000);
+    // 포션 애니메이션 재생 (정확히 3번 반복 후 idle로 자동 복귀).
+    // 부가 연출 실패가 성공 판정 결과를 가리지 않도록 try/catch로 격리한다.
+    try {
+      if (window.hpetCharacter) {
+        window.hpetCharacter.playMotion('Potion', 3);
+      }
+    } catch (err) {
+      console.error('포션 모션 재생 실패 (인증 성공 결과에는 영향 없음)', err);
     }
 
     // 보상 모달 표시 (실제 응답의 획득 포인트를 그대로 사용)

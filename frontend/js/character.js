@@ -22,6 +22,26 @@ function getCharacterMotionPath(characterCode, growthPoints, action) {
   return `assets/characters_motion/${characterCode}/${stage}/${titleCasedCode}_${action}.gif`;
 }
 
+// 모션 GIF 1회 재생 길이(ms). assets/characters_motion 내 모든 캐릭터/단계 GIF를 실측한 결과
+// 공통적으로 50프레임 x 100ms = 5000ms이므로, "N번 반복"은 이 값의 배수로 근사한다.
+const MOTION_SINGLE_LOOP_MS = 5000;
+
+// 옷장 아이템별 표시 위치. 리본은 캐릭터 우측 상단, 선글라스는 캐릭터 중앙보다 약간 위쪽에 배치한다.
+const CLOSET_ITEM_LAYOUT = {
+  item_ribbon: { top: '6%', right: '6%' },
+  item_glasses: { top: '38%', left: '50%' }
+};
+
+// 아이템 아이콘의 위치/크기 인라인 스타일 생성. 기존 크기(baseFontSizePx)의 1/10로 축소해 표시한다.
+function buildClosetItemStyle(itemId, baseFontSizePx) {
+  const layout = CLOSET_ITEM_LAYOUT[itemId] || { top: '50%', left: '50%' };
+  const fontSize = baseFontSizePx / 10;
+  const positioned = layout.left
+    ? `left:${layout.left}; transform:translate(-50%, -50%);`
+    : `right:${layout.right}; transform:translateY(-50%);`;
+  return `position:absolute; top:${layout.top}; ${positioned} font-size:${fontSize}px; line-height:1;`;
+}
+
 class HPetCharacterEngine {
   constructor() {
     this.container = null;
@@ -51,8 +71,21 @@ class HPetCharacterEngine {
     this.motionTimeout = null;
   }
 
-  // 모션 제어 로직
-  playMotion(action, duration = null) {
+  // 대시보드 게이지/캐릭터 이미지 갱신. 화면 갱신 실패가 판정 로직(성공/실패 메시지)에
+  // 영향을 주지 않도록 항상 이 헬퍼를 통해서만 호출하고, 내부에서 예외를 흡수한다.
+  refreshDashboard() {
+    try {
+      if (window.hpetDashboard && typeof window.hpetDashboard.render === 'function') {
+        window.hpetDashboard.render();
+      }
+    } catch (err) {
+      console.error('대시보드 갱신 실패 (판정 결과에는 영향 없음)', err);
+    }
+  }
+
+  // 모션 제어 로직. repeatCount가 숫자면 그만큼 반복 후 idle로 자동 복귀,
+  // null이면 stopMotionLoop()으로 멈추기 전까지 계속 루프 재생한다.
+  playMotion(action, repeatCount = null) {
     if (!window.hpetStore || !window.hpetStore.state.pet) return;
 
     // 기존 예약된 모션 초기화 타이머 취소
@@ -63,21 +96,34 @@ class HPetCharacterEngine {
 
     // 글로벌 상태 업데이트
     window.hpetStore.state.pet.currentMotion = action;
-    
-    // 대시보드가 열려 있다면 렌더링 갱신
-    if (window.hpetDashboard) {
-      window.hpetDashboard.updateGauges();
-    }
+    this.refreshDashboard();
 
-    // 지정된 시간 후 해제 (null이면 계속 루프)
-    if (duration !== null) {
+    // 반복 횟수가 지정되면 그만큼 재생 후 idle로 복귀, null이면 무한 루프 유지
+    if (repeatCount !== null) {
+      const duration = MOTION_SINGLE_LOOP_MS * repeatCount;
       this.motionTimeout = setTimeout(() => {
         window.hpetStore.state.pet.currentMotion = null;
-        if (window.hpetDashboard) {
-          window.hpetDashboard.updateGauges();
-        }
+        this.motionTimeout = null;
+        this.refreshDashboard();
       }, duration);
     }
+  }
+
+  // 지정된 모션을 멈출 때까지 계속 루프 재생 (stopMotionLoop 호출 전까지 유지)
+  startMotionLoop(action) {
+    this.playMotion(action, null);
+  }
+
+  // 루프 중인 모션을 멈추고 idle 상태로 복귀
+  stopMotionLoop() {
+    if (this.motionTimeout) {
+      clearTimeout(this.motionTimeout);
+      this.motionTimeout = null;
+    }
+    if (window.hpetStore && window.hpetStore.state.pet) {
+      window.hpetStore.state.pet.currentMotion = null;
+    }
+    this.refreshDashboard();
   }
 
   bindInteractions() {
@@ -149,9 +195,7 @@ class HPetCharacterEngine {
     }
 
     // 대시보드 게이지 업데이트 갱신
-    if (window.hpetDashboard) {
-      window.hpetDashboard.updateGauges();
-    }
+    this.refreshDashboard();
   }
 
   setTurtleNeckAlert(isTurtle) {
@@ -161,14 +205,14 @@ class HPetCharacterEngine {
       this.visual.classList.add('turtle-neck-warning');
       this.sayBubble("⚠️ 으악! 거북목 감지! 목과 어깨를 쭉 펴주세요!");
       window.hpetSound.playBeep(220, 0.3, 'square');
-      // 거북목 지속 루프 (게임 종료 시 해제되므로 duration=null)
-      this.playMotion('Unhappiness', null);
+      // 거북목 지속 루프 (게임 종료/자세 교정 성공 시 해제되므로 무한 루프)
+      this.startMotionLoop('Unhappiness');
     } else {
       this.visual.classList.remove('turtle-neck-warning');
       this.sayBubble("바른 자세 유지 중! 훌륭해요! 👍");
       // 거북목 상태 해제
       if (window.hpetStore.state.pet.currentMotion === 'Unhappiness') {
-        this.playMotion(null);
+        this.stopMotionLoop();
       }
     }
   }
@@ -337,18 +381,20 @@ class HPetCharacterEngine {
   updateClosetPreview() {
     const previewLayer = document.getElementById('closet-preview-item');
     if (!previewLayer) return;
-    
-    const icons = this.tempEquipped.map(id => {
+
+    // 기존 미리보기 기준 크기는 60px였으므로 1/10인 6px로 축소
+    const html = this.tempEquipped.map(id => {
       const item = this.availableItems.find(i => i.id === id);
-      return item ? item.icon : '';
+      if (!item) return '';
+      return `<span style="${buildClosetItemStyle(id, 60)}">${item.icon}</span>`;
     }).join('');
-    
-    if (icons) {
-      previewLayer.textContent = icons;
+
+    if (html) {
+      previewLayer.innerHTML = html;
       previewLayer.style.display = 'block';
     } else {
       previewLayer.style.display = 'none';
-      previewLayer.textContent = '';
+      previewLayer.innerHTML = '';
     }
   }
 
@@ -357,28 +403,26 @@ class HPetCharacterEngine {
     if (!layer) return;
 
     const equipped = window.hpetStore.state.pet.equippedItems || [];
-    
+
     // availableItems가 아직 선언 안됐을 수 있으므로 하드코딩된 리스트 임시 참조
     const allItems = this.availableItems || [
       { id: 'item_ribbon', icon: '🎀' },
       { id: 'item_glasses', icon: '🕶️' }
     ];
 
-    const icons = equipped.map(id => {
+    // 기존 캐릭터 위 아이템 기준 크기는 80px였으므로 1/10인 8px로 축소
+    const html = equipped.map(id => {
       const item = allItems.find(i => i.id === id);
-      return item ? item.icon : '';
+      if (!item) return '';
+      return `<span style="${buildClosetItemStyle(id, 80)}">${item.icon}</span>`;
     }).join('');
 
-    if (icons) {
-      layer.textContent = icons;
-      // 위치 중앙 정렬용 스타일
-      layer.style.display = 'flex';
-      layer.style.justifyContent = 'center';
-      layer.style.alignItems = 'center';
-      layer.style.fontSize = '80px'; 
+    if (html) {
+      layer.innerHTML = html;
+      layer.style.display = 'block';
       layer.style.zIndex = '5';
     } else {
-      layer.textContent = '';
+      layer.innerHTML = '';
       layer.style.display = 'none';
     }
   }

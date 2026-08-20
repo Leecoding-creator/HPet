@@ -107,14 +107,20 @@ class HPetPostureGame {
       this.remainSeconds--;
       this.updateTimerDisplay();
 
-      // 2초마다 자세 판정 시뮬레이션 (랜덤 기반)
-      if (this.remainSeconds % 2 === 0) {
-        this.simulatePostureCheck();
-      }
-
-      // 타이머 종료
+      // 타이머 종료 처리를 최우선으로 실행 & 종료 후에는 자세 판정을 더 이상 돌리지 않음.
+      // (자세 판정 로직에서 예외가 나더라도 화면 전환이 절대 막히지 않도록 순서를 분리)
       if (this.remainSeconds <= 0) {
         this.endGame();
+        return;
+      }
+
+      // 2초마다 자세 판정 시뮬레이션 (랜덤 기반)
+      if (this.remainSeconds % 2 === 0) {
+        try {
+          this.simulatePostureCheck();
+        } catch (err) {
+          console.error('자세 판정 처리 중 오류 (타이머는 계속 진행)', err);
+        }
       }
     }, 1000);
   }
@@ -218,10 +224,12 @@ class HPetPostureGame {
       window.hpetStore.saveState();
       window.hpetSound.playSuccess();
 
-      // 캐릭터 정상 복귀 및 기뻐하는 애니메이션 재생
+      // 캐릭터 정상 복귀. 실패 루프(Unhappiness)가 돌고 있었다면 멈추고,
+      // 기뻐하는 애니메이션(Happiness)을 정확히 3번 반복 후 idle로 복귀시킨다.
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(false);
-        window.hpetCharacter.playMotion('Happiness', 4000);
+        window.hpetCharacter.stopMotionLoop();
+        window.hpetCharacter.playMotion('Happiness', 3);
       }
 
       this.showResultModal(
@@ -238,8 +246,11 @@ class HPetPostureGame {
 
       window.hpetSound.playBeep(330, 0.2, 'triangle');
 
+      // 실시간 거북목 경고 배너/문구는 게임 종료와 함께 해제하되, 캐릭터는 다음 번
+      // 자세 교정에 성공할 때까지 계속 Unhappiness 모션을 루프 재생하도록 유지한다.
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(false);
+        window.hpetCharacter.startMotionLoop('Unhappiness');
       }
 
       this.showResultModal(
