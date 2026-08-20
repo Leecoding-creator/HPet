@@ -29,7 +29,12 @@
 
     <!-- 앱 메인 스크린 컨테이너 -->
     <main id="app" class="screen-container">
-      
+
+      <!-- 실제 스크롤이 일어나는 영역. 헤더~각 view-section만 감싸고, 하단 네비게이션(#app-nav)과
+           모달은 이 밖(#app 기준)에 위치시켜, 프레임 내부에서 콘텐츠만 스크롤되고 하단 네비게이션은
+           항상 프레임 하단에 고정되도록 한다 (스크롤 영역 내용과 겹치지 않음). -->
+      <div id="app-scroll" class="app-scroll-area">
+
       <!-- 헤더 (앱 공통 유저/게이지 요약 - 로그인 후 표시) -->
       <header id="main-header" class="app-header hidden">
         <div class="user-info">
@@ -268,10 +273,14 @@
 
         <!-- 중앙 캐릭터 영역 -->
         <div class="home-character-area" id="home-character-area">
-          <div class="speech-bubble pop-animation" id="pet-speech">
-            오늘도<br>잘 부탁해!<br>❤️
-          </div>
           <div class="character-wrapper" id="pet-character-wrapper" style="position: relative;">
+            <!-- 말풍선을 .home-character-area가 아니라 캐릭터의 고정 크기 박스(.character-wrapper,
+                 항상 220px) 기준으로 배치한다. .home-character-area는 뷰포트에 따라 높이가 크게
+                 늘어나는 flex:1 영역이라, 그 기준으로 %를 잡으면 화면이 좁을 때 캐릭터 머리와
+                 겹치기 쉽다. -->
+            <div class="speech-bubble pop-animation" id="pet-speech">
+              오늘도<br>잘 부탁해!<br>❤️
+            </div>
             <!-- 캐릭터와 장착 아이템을 하나의 부모(pet-visual-anchor)에 묶어 bounce 애니메이션을 부모에서만
                  재생한다. 아이템은 이 부모의 좌표계 안에서 정적으로 배치되므로, 부모가 움직이면
                  별도 동기화 없이 항상 같은 프레임에서 함께 움직인다. -->
@@ -452,6 +461,9 @@
           </div>
         </div>
       </section>
+
+      </div>
+      <!-- /#app-scroll -->
 
       <!-- VIEW 7: 설정 및 프로필 관리 -->
       <!-- 팝업 모달: 앱 설정 -->
