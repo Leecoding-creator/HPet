@@ -54,6 +54,7 @@ class HPetProfileManager {
           await window.hpetApi.logout().catch(err => console.error('로그아웃 요청 실패', err));
           window.hpetStore.state.user.isLoggedIn = false;
           window.hpetStore.saveState();
+          document.getElementById('modal-settings')?.classList.add('hidden');
           window.hpetRouter.navigateTo('auth');
         }
       });
@@ -62,14 +63,19 @@ class HPetProfileManager {
     // 회원탈퇴
     const btnDelete = document.getElementById('btn-delete-account');
     if (btnDelete) {
-      btnDelete.addEventListener('click', () => {
-        if (confirm('정말 탈퇴하시겠습니까? 모든 펫 정보와 기록이 삭제되며 복구할 수 없습니다.')) {
-          window.hpetApi.clearTokens();
-          localStorage.removeItem('HPET_APP_STATE_V1');
-          localStorage.removeItem('hpet_dark_mode');
-          alert('회원탈퇴가 완료되었습니다. 처음부터 다시 시작합니다.');
-          location.reload();
+      btnDelete.addEventListener('click', async () => {
+        if (!confirm('정말 탈퇴하시겠습니까? 모든 펫 정보와 기록이 삭제되며 복구할 수 없습니다.')) return;
+        try {
+          await window.hpetApi.withdraw();
+        } catch (err) {
+          alert(err.message || '회원탈퇴에 실패했습니다.');
+          return;
         }
+        window.hpetApi.clearTokens();
+        localStorage.removeItem('HPET_APP_STATE_V1');
+        localStorage.removeItem('hpet_dark_mode');
+        alert('회원탈퇴가 완료되었습니다. 처음부터 다시 시작합니다.');
+        location.reload();
       });
     }
 
@@ -95,19 +101,27 @@ class HPetProfileManager {
     }
 
     if (btnSaveEdit) {
-      btnSaveEdit.addEventListener('click', () => {
+      btnSaveEdit.addEventListener('click', async () => {
         const newName = inputName.value.trim();
-        if (newName) {
+        if (!newName) return;
+
+        btnSaveEdit.disabled = true;
+        try {
+          await window.hpetApi.updateNickname(newName);
           window.hpetStore.state.user.name = newName;
           window.hpetStore.saveState();
           this.render();
-          
+
           // 헤더 이름도 업데이트
           const headerName = document.getElementById('header-username');
           if (headerName) headerName.textContent = `${newName}님`;
-          
+
           modalEdit.classList.add('hidden');
           if (window.hpetSound) window.hpetSound.playSuccess();
+        } catch (err) {
+          alert(err.message || '닉네임 저장에 실패했습니다.');
+        } finally {
+          btnSaveEdit.disabled = false;
         }
       });
     }

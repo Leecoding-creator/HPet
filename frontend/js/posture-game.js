@@ -4,6 +4,13 @@
  * 웹캠 기반 자세 측정 시뮬레이션, 거북목 경고 모달, 교정 타이머 게임
  */
 
+// 백엔드는 LocalDateTime(타임존 없는 "YYYY-MM-DDTHH:mm:ss")을 기대하므로,
+// Date.toISOString()의 UTC/밀리초/Z 표기를 쓰지 않고 로컬 시각 기준으로 직접 포맷한다.
+function toLocalIsoString(date) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 class HPetPostureGame {
   constructor() {
     this.stream = null;
@@ -25,10 +32,14 @@ class HPetPostureGame {
     document.getElementById('btn-start-posture-game')?.addEventListener('click', () => {
       if (!this.isPlaying) this.startGame();
     });
+    // 미니게임 중지 버튼
+    document.getElementById('btn-stop-posture-game')?.addEventListener('click', () => {
+      if (this.isPlaying) this.resetGame();
+    });
 
     // 카메라 뷰 진입/퇴장 시 스트림 관리
     window.addEventListener('hpet_view_enter_postureGame', () => this.startPostureCamera());
-    window.addEventListener('hpet_view_leave_postureGame', () => this.stopGame());
+    window.addEventListener('hpet_view_leave_postureGame', () => this.resetGame());
   }
 
   // ── 자세 게임용 웹캠 시작 ──
@@ -80,12 +91,14 @@ class HPetPostureGame {
     setTimeout(() => window.hpetSound.playBeep(659.25, 0.1), 150);
     setTimeout(() => window.hpetSound.playBeep(783.99, 0.15), 300);
 
-    // 시작 버튼 비활성화
+    // 시작 버튼 비활성화 및 중지 버튼 표시
     const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
     if (startBtn) {
-      startBtn.textContent = '게임 진행 중...';
-      startBtn.disabled = true;
-      startBtn.style.opacity = '0.6';
+      startBtn.classList.add('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.remove('hidden');
     }
 
     // 타이머 카운트다운
@@ -94,14 +107,20 @@ class HPetPostureGame {
       this.remainSeconds--;
       this.updateTimerDisplay();
 
-      // 2초마다 자세 판정 시뮬레이션 (랜덤 기반)
-      if (this.remainSeconds % 2 === 0) {
-        this.simulatePostureCheck();
-      }
-
-      // 타이머 종료
+      // 타이머 종료 처리를 최우선으로 실행 & 종료 후에는 자세 판정을 더 이상 돌리지 않음.
+      // (자세 판정 로직에서 예외가 나더라도 화면 전환이 절대 막히지 않도록 순서를 분리)
       if (this.remainSeconds <= 0) {
         this.endGame();
+        return;
+      }
+
+      // 2초마다 자세 판정 시뮬레이션 (랜덤 기반)
+      if (this.remainSeconds % 2 === 0) {
+        try {
+          this.simulatePostureCheck();
+        } catch (err) {
+          console.error('자세 판정 처리 중 오류 (타이머는 계속 진행)', err);
+        }
       }
     }, 1000);
   }
@@ -146,6 +165,11 @@ class HPetPostureGame {
         window.hpetCharacter.setTurtleNeckAlert(true);
       }
 
+      // 판정된 순간을 실제 백엔드에 기록 (게임 템포를 막지 않도록 결과를 기다리지 않음).
+      // 사진 한 장 기반 판정과 동일하게 각도/지속시간은 측정 불가라 0으로 남긴다.
+      window.hpetApi.createPostureEvent(toLocalIsoString(new Date()), 0, 0)
+        .catch(err => console.error('자세 불량 이벤트 기록 실패', err));
+
       // 2초 뒤 경고 배너 자동 숨김
       setTimeout(() => {
         if (turtleBanner) turtleBanner.classList.add('hidden');
@@ -178,10 +202,15 @@ class HPetPostureGame {
 
     // 시작 버튼 복원
     const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
     if (startBtn) {
       startBtn.innerHTML = '미니게임 다시 시작';
       startBtn.disabled = false;
       startBtn.style.opacity = '1';
+      startBtn.classList.remove('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.add('hidden');
     }
 
     // 거북목 감지가 3회 미만이면 성공 판정
@@ -195,10 +224,12 @@ class HPetPostureGame {
       window.hpetStore.saveState();
       window.hpetSound.playSuccess();
 
-      // 캐릭터 정상 복귀 및 기뻐하는 애니메이션 재생
+      // 캐릭터 정상 복귀. 실패 루프(Unhappiness)가 돌고 있었다면 멈추고,
+      // 기뻐하는 애니메이션(Happiness)을 정확히 3번 반복 후 idle로 복귀시킨다.
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(false);
-        window.hpetCharacter.playMotion('Happiness', 4000);
+        window.hpetCharacter.stopMotionLoop();
+        window.hpetCharacter.playMotion('Happiness', 3);
       }
 
       this.showResultModal(
@@ -215,8 +246,11 @@ class HPetPostureGame {
 
       window.hpetSound.playBeep(330, 0.2, 'triangle');
 
+      // 실시간 거북목 경고 배너/문구는 게임 종료와 함께 해제하되, 캐릭터는 다음 번
+      // 자세 교정에 성공할 때까지 계속 Unhappiness 모션을 루프 재생하도록 유지한다.
       if (window.hpetCharacter) {
         window.hpetCharacter.setTurtleNeckAlert(false);
+        window.hpetCharacter.startMotionLoop('Unhappiness');
       }
 
       this.showResultModal(
@@ -264,6 +298,39 @@ class HPetPostureGame {
     if (this.videoEl) {
       this.videoEl.srcObject = null;
     }
+  }
+
+  // ── 게임 초기화 (중지 버튼 클릭 혹은 뷰 이탈 시) ──
+  resetGame() {
+    this.stopGame();
+
+    this.remainSeconds = 30;
+    this.updateTimerDisplay();
+
+    // 시작/중지 버튼 토글
+    const startBtn = document.getElementById('btn-start-posture-game');
+    const stopBtn = document.getElementById('btn-stop-posture-game');
+    if (startBtn) {
+      startBtn.textContent = '미니게임 시작';
+      startBtn.disabled = false;
+      startBtn.style.opacity = '1';
+      startBtn.classList.remove('hidden');
+    }
+    if (stopBtn) {
+      stopBtn.classList.add('hidden');
+    }
+
+    // 상태 초기화
+    const indicator = document.getElementById('posture-indicator');
+    const statusText = document.getElementById('posture-status-text');
+    const turtleBanner = document.getElementById('turtle-warning');
+
+    if (indicator) {
+      indicator.className = 'status-indicator good';
+      indicator.querySelector('i').className = 'fa-solid fa-face-smile';
+    }
+    if (statusText) statusText.textContent = '바른 자세 유지 중!';
+    if (turtleBanner) turtleBanner.classList.add('hidden');
   }
 }
 

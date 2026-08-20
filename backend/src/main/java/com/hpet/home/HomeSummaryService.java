@@ -63,7 +63,25 @@ public class HomeSummaryService {
                         us.getId(), us.getCustomName(), completedUserSupplementIds.contains(us.getId())))
                 .toList();
 
-        return new HomeSummaryResponse.DoseSummary(registeredSupplements.size(), completedUserSupplementIds.size(), doseList);
+        int consecutiveDays = calculateConsecutiveDays(userId, today, !completedUserSupplementIds.isEmpty());
+
+        return new HomeSummaryResponse.DoseSummary(registeredSupplements.size(), completedUserSupplementIds.size(), consecutiveDays, doseList);
+    }
+
+    private int calculateConsecutiveDays(Long userId, LocalDate today, boolean tookToday) {
+        int streak = tookToday ? 1 : 0;
+        LocalDate date = today.minusDays(1);
+        while (true) {
+            boolean tookThatDay = doseRecordRepository.findByUserIdAndDoseDate(userId, date).stream()
+                    .anyMatch(com.hpet.domain.dose.DoseRecord::isVerified);
+            if (tookThatDay) {
+                streak++;
+                date = date.minusDays(1);
+            } else {
+                break;
+            }
+        }
+        return streak;
     }
 
     private CharacterResponse buildCharacterSummary(Long userId) {

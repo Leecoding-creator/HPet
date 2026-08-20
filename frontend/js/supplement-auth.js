@@ -1,7 +1,10 @@
 /**
  * HPet - 영양제 AI 카메라 촬영 인증 & 포션 보상 시스템 (Stage 5)
- * 
- * 웹캠 바인딩, 사진 캡처, AI 스캔 시뮬레이션, 포션 보상 지급 처리
+ *
+ * ⚠️ 팀 확정(2026-08-19, 준호님): "영양제별로 따로 안 하고 통째로(전체) 인증"으로 변경.
+ * 오늘 먹을 영양제를 전부 한 사진에 모아서 촬영하면, 서버가 AI로 알약 개수를 세서
+ * 등록 개수(n) 대비 몇 개를 인증했는지 판정한다. 그래서 더 이상 "인증 대상 영양제 하나"를
+ * 미리 찾아둘 필요가 없다 (currentSuppId 관련 로직 전부 제거).
  */
 
 class HPetSupplementAuth {
@@ -11,7 +14,6 @@ class HPetSupplementAuth {
     this.placeholder = null;      // 업로드 안내 영역
     this.btnAnalyze = null;       // 분석 버튼
     this.isScanning = false;      // AI 분석 진행 중 여부
-    this.currentSuppId = null;    // 현재 인증 대상 영양제 ID
   }
 
   init() {
@@ -64,7 +66,9 @@ class HPetSupplementAuth {
     });
 
     // 뷰 진입/퇴장 시 초기화
-    window.addEventListener('hpet_view_enter_cameraAuth', () => this.resetAuthView());
+    window.addEventListener('hpet_view_enter_cameraAuth', () => {
+      this.resetAuthView();
+    });
     window.addEventListener('hpet_view_leave_cameraAuth', () => this.resetAuthView());
   }
 
@@ -80,49 +84,52 @@ class HPetSupplementAuth {
     this.isScanning = false;
   }
 
-  // ── AI 분석 시뮬레이션 ──
-  captureAndAnalyze() {
+  // ── AI 분석 (실제 백엔드 호출) ──
+  async captureAndAnalyze() {
+    const file = this.fileInput?.files[0];
+    if (!file) return;
+
     this.isScanning = true;
     window.hpetSound.playBeep(1000, 0.06);
 
-
-
-    // 2) AI 스캔 오버레이 표시
     const scanOverlay = document.getElementById('ai-scanning-overlay');
     if (scanOverlay) scanOverlay.classList.remove('hidden');
 
-    // 3) 2초 뒤 분석 완료 시뮬레이션 (성공률 85%)
-    setTimeout(() => {
-      const isSuccess = Math.random() < 0.85;
-
+    try {
+      // 오늘 등록된 영양제 전체를 한 사진으로 인증 (userSupplementId 지정 안 함)
+      const result = await window.hpetApi.verifyDosePhoto(file);
       if (scanOverlay) scanOverlay.classList.add('hidden');
       this.isScanning = false;
 
-      if (isSuccess) {
-        this.onAuthSuccess();
+      if (result.verified) {
+        this.onAuthSuccess(result);
       } else {
-        this.onAuthFail();
+        this.onAuthFail(result.reason);
       }
-    }, 2200);
+    } catch (err) {
+      if (scanOverlay) scanOverlay.classList.add('hidden');
+      this.isScanning = false;
+      this.onAuthFail(err.message || 'AI 판정 요청에 실패했습니다.');
+    }
   }
 
   // ── 인증 성공 처리 ──
-  onAuthSuccess() {
+  // 성공/실패 판정은 이 함수가 호출되는 시점(백엔드 응답의 verified 필드)에서 이미 끝난
+  // 상태이므로, 아래 캐릭터 모션 재생이 실패하더라도 보상 모달 표시는 항상 진행되어야 한다.
+  onAuthSuccess(result) {
     window.hpetSound.playSuccess();
 
-    // 아직 인증 안 된 첫 번째 영양제를 자동 인증 처리
-    const state = window.hpetStore.state;
-    const unverified = state.supplements.find(s => !s.takenToday);
-    if (unverified) {
-      window.hpetStore.markSupplementTaken(unverified.id);
+    // 포션 애니메이션 재생 (정확히 3번 반복 후 idle로 자동 복귀).
+    // 부가 연출 실패가 성공 판정 결과를 가리지 않도록 try/catch로 격리한다.
+    try {
+      if (window.hpetCharacter) {
+        window.hpetCharacter.playMotion('Potion', 3);
+      }
+    } catch (err) {
+      console.error('포션 모션 재생 실패 (인증 성공 결과에는 영향 없음)', err);
     }
 
-    // 포션 애니메이션 재생 (4초 후 원래대로)
-    if (window.hpetCharacter) {
-      window.hpetCharacter.playMotion('Potion', 4000);
-    }
-
-    // 보상 모달 표시
+    // 보상 모달 표시 (실제 응답의 획득 포인트를 그대로 사용)
     const rewardTitle = document.getElementById('reward-title');
     const rewardDesc = document.getElementById('reward-desc');
     const rewardIcon = document.getElementById('reward-icon');
@@ -130,16 +137,16 @@ class HPetSupplementAuth {
 
     if (rewardTitle) rewardTitle.textContent = '복용 인증 성공!';
     if (rewardDesc) {
-      const suppName = unverified ? unverified.name : '영양제';
-      rewardDesc.textContent = `${suppName} 복용이 확인되었습니다! 포션 +20 획득 🧪`;
+      // 개별 영양제 이름 대신, "오늘 n개 중 몇 개 인증됐는지"로 표시 (전체인증 방식이라 어떤
+      // 영양제인지는 AI가 구별하지 않음)
+      rewardDesc.textContent = `오늘 ${result.requiredCountToday}개 중 ${result.verifiedCountToday}개 인증 완료! `
+        + `성장치 +${result.pointsGainedThisTime} (오늘 ${result.todayEarnedPoints}/${result.dailyMaxPoints}) 🧪`;
     }
     if (rewardIcon) rewardIcon.textContent = '🧪';
     if (modal) modal.classList.remove('hidden');
 
     // 보상 모달 닫힘 시 대시보드로 복귀
     const closeBtn = document.getElementById('btn-close-reward');
-    const originalHandler = closeBtn?.onclick;
-
     if (closeBtn) {
       closeBtn.onclick = () => {
         modal.classList.add('hidden');
@@ -150,7 +157,7 @@ class HPetSupplementAuth {
   }
 
   // ── 인증 실패 처리 ──
-  onAuthFail() {
+  onAuthFail(reason) {
     window.hpetSound.playBeep(220, 0.2, 'sawtooth');
 
     const rewardTitle = document.getElementById('reward-title');
@@ -159,7 +166,7 @@ class HPetSupplementAuth {
     const modal = document.getElementById('modal-reward');
 
     if (rewardTitle) rewardTitle.textContent = '인증 실패 😢';
-    if (rewardDesc) rewardDesc.textContent = '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
+    if (rewardDesc) rewardDesc.textContent = reason || '영양제를 정확히 인식하지 못했습니다. 라벨이 보이게 다시 촬영해주세요!';
     if (rewardIcon) rewardIcon.textContent = '📷';
     if (modal) modal.classList.remove('hidden');
 

@@ -2,13 +2,12 @@
  * HPet - Dashboard Controller & Mission Checklist Management (Stage 4)
  */
 
-// 성장 단계(백엔드 6단계 enum) → 한글 라벨 / 레벨 숫자
-// 팀 결정 필요(작업지시서 3번): 정식 EXP/레벨 게이지가 정해지기 전까지의 임시 근사치
+// 성장 단계(백엔드 GrowthStage enum: STAGE_1~STAGE_4, 경험치 0~300 기준 4단계) → 한글 라벨 / 레벨 숫자
+// 백엔드 주석 기준: 실제 단계 이름은 아직 미정이라 "1단계~4단계"로 임시 표기 (기획/디자인 확정 시 교체)
 const STAGE_LABELS = {
-  BABY: '아기', TODDLER: '유아기', CHILD: '어린이',
-  TEEN: '청소년', ADULT: '성체', GROWN: '완전성장'
+  STAGE_1: '1단계', STAGE_2: '2단계', STAGE_3: '3단계', STAGE_4: '4단계'
 };
-const STAGE_INDEX = { BABY: 1, TODDLER: 2, CHILD: 3, TEEN: 4, ADULT: 5, GROWN: 6 };
+const STAGE_INDEX = { STAGE_1: 1, STAGE_2: 2, STAGE_3: 3, STAGE_4: 4 };
 
 class HPetDashboardManager {
   constructor() {
@@ -186,6 +185,15 @@ class HPetDashboardManager {
         if (headerName) headerName.textContent = `${window.hpetStore.state.user.name}님`;
       }
 
+      const headerStreak = document.getElementById('header-streak');
+      const badgeContainer = document.getElementById('streak-badge-container');
+      if (summary.doseSummary && summary.doseSummary.consecutiveDays > 0) {
+        if (headerStreak) headerStreak.textContent = summary.doseSummary.consecutiveDays;
+        if (badgeContainer) badgeContainer.style.display = '';
+      } else {
+        if (badgeContainer) badgeContainer.style.display = 'none';
+      }
+
       this.renderCharacter(summary.characterSummary);
       this.renderMissions(summary.doseSummary);
       this.renderPosture(summary.postureSummary);
@@ -230,7 +238,7 @@ class HPetDashboardManager {
     const growthPercent = Math.max(0, Math.min(100, Math.round((characterSummary.growthPoints / maxPoints) * 100)));
 
     if (nameEl) nameEl.textContent = characterSummary.characterName;
-    if (levelEl) levelEl.textContent = `Lv.${stageIdx} ${stageLabel}`;
+    if (levelEl) levelEl.textContent = `Lv.${stageIdx}`;
     if (growthBar) growthBar.style.width = `${growthPercent}%`;
     if (growthText) growthText.innerHTML = `<strong>${characterSummary.growthPoints}</strong> / ${maxPoints} (${growthPercent}%)`;
     if (mainImg) {
