@@ -2,8 +2,27 @@
  * HPet - Tamagotchi Character Animation & Interaction Engine (Stage 4)
  */
 
+// 베타테스트 데모용 성장단계 미리보기 오버라이드. 1~4가 설정되면 실제 growthPoints를 무시하고
+// 항상 이 단계로 이미지/모션 GIF 경로를 계산한다 (getCharacterImagePath/getCharacterMotionPath가
+// 공통으로 참조하는 getStageNumber() 안에서 처리). 순수 프론트 상태이며 새로고침하면 초기화되고,
+// growthPoints/DB 등 실제 데이터는 전혀 건드리지 않는다.
+let previewStageOverride = null;
+
+function setPreviewStage(stage) {
+  previewStageOverride = stage;
+}
+
+function clearPreviewStage() {
+  previewStageOverride = null;
+}
+
+function getPreviewStage() {
+  return previewStageOverride;
+}
+
 // 경험치(0~300) 기준으로 캐릭터 이미지 단계(1~4) 계산
 function getStageNumber(growthPoints) {
+  if (previewStageOverride) return previewStageOverride;
   if (growthPoints <= 49) return 1;
   if (growthPoints <= 119) return 2;
   if (growthPoints <= 199) return 3;
@@ -28,18 +47,18 @@ const MOTION_SINGLE_LOOP_MS = 5000;
 
 // 옷장 아이템별 표시 위치. 리본은 캐릭터 우측 상단, 선글라스는 캐릭터 중앙보다 약간 위쪽에 배치한다.
 const CLOSET_ITEM_LAYOUT = {
-  item_ribbon: { top: '6%', right: '6%' },
-  item_glasses: { top: '38%', left: '50%' }
+  item_ribbon: { top: '20%', right: '25%' },
+  item_glasses: { top: '25%', left: '50%', transform: 'translateX(-50%)' }
 };
 
-// 아이템 아이콘의 위치/크기 인라인 스타일 생성. 기존 크기(baseFontSizePx)의 1/10로 축소해 표시한다.
+// 아이템 아이콘의 위치/크기 인라인 스타일 생성. 기존 크기(baseFontSizePx)의 1/10 대비 5배(1/2)에서
+// 다시 1.5배 키운 3/4 크기로 표시한다.
 function buildClosetItemStyle(itemId, baseFontSizePx) {
   const layout = CLOSET_ITEM_LAYOUT[itemId] || { top: '50%', left: '50%' };
-  const fontSize = baseFontSizePx / 10;
-  const positioned = layout.left
-    ? `left:${layout.left}; transform:translate(-50%, -50%);`
-    : `right:${layout.right}; transform:translateY(-50%);`;
-  return `position:absolute; top:${layout.top}; ${positioned} font-size:${fontSize}px; line-height:1;`;
+  const fontSize = baseFontSizePx * 0.75;
+  const positionProp = layout.left ? `left:${layout.left};` : `right:${layout.right};`;
+  const transform = layout.transform || (layout.left ? 'translate(-50%, -50%)' : 'translateY(-50%)');
+  return `position:absolute; top:${layout.top}; ${positionProp} transform:${transform}; font-size:${fontSize}px; line-height:1;`;
 }
 
 class HPetCharacterEngine {
@@ -62,13 +81,51 @@ class HPetCharacterEngine {
     this.bindInteractions();
     this.initCloset();
     this.applyEquippedItems();
-    
+    this.initStagePreview();
+
     // 상태 변경 시 아이템 리렌더링
     window.addEventListener('hpet_state_changed', () => {
       this.applyEquippedItems();
     });
 
     this.motionTimeout = null;
+  }
+
+  // ==========================================
+  // 베타테스트 데모: 성장단계(1~4) 미리보기
+  // ==========================================
+
+  // 현재 화면에 표시 중인 characterCode를 #main-pet-img의 src에서 그대로 읽어온다.
+  // (옷장 미리보기가 이미 같은 방식으로 메인 이미지 src를 기준 삼는 것과 동일한 패턴)
+  getCurrentCharacterCode() {
+    const mainImg = document.getElementById('main-pet-img');
+    const match = (mainImg?.src || '').match(/characters(?:_motion)?\/([^/?#]+)\//);
+    return match ? match[1] : 'CHICK';
+  }
+
+  initStagePreview() {
+    const toggle = document.getElementById('stage-preview-toggle');
+    if (!toggle) return;
+
+    toggle.querySelectorAll('.stage-preview-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const stage = Number(btn.dataset.stage);
+        setPreviewStage(stage);
+
+        toggle.querySelectorAll('.stage-preview-btn').forEach(b => b.classList.toggle('active', b === btn));
+
+        // API 재호출 없이 현재 화면(정지 이미지 또는 재생 중인 모션)을 즉시 미리보기 단계로 갱신.
+        // 실제 growthPoints는 그대로 두고, getStageNumber()의 오버라이드만으로 경로를 다시 계산한다.
+        const mainImg = document.getElementById('main-pet-img');
+        if (!mainImg) return;
+
+        const characterCode = this.getCurrentCharacterCode();
+        const currentMotion = window.hpetStore?.state?.pet?.currentMotion;
+        mainImg.src = currentMotion
+          ? getCharacterMotionPath(characterCode, 0, currentMotion)
+          : getCharacterImagePath(characterCode, 0);
+      });
+    });
   }
 
   // 대시보드 게이지/캐릭터 이미지 갱신. 화면 갱신 실패가 판정 로직(성공/실패 메시지)에
@@ -382,11 +439,12 @@ class HPetCharacterEngine {
     const previewLayer = document.getElementById('closet-preview-item');
     if (!previewLayer) return;
 
-    // 기존 미리보기 기준 크기는 60px였으므로 1/10인 6px로 축소
+    // 옷장 미리보기 컨테이너가 메인 화면과 동일한 220px 기준 구조(.character-wrapper/.pet-visual-anchor)를
+    // scale()로만 축소해 재사용하므로, 기준 크기도 메인(applyEquippedItems)과 동일하게 맞춰야 위치/비율이 일치한다.
     const html = this.tempEquipped.map(id => {
       const item = this.availableItems.find(i => i.id === id);
       if (!item) return '';
-      return `<span style="${buildClosetItemStyle(id, 60)}">${item.icon}</span>`;
+      return `<span style="${buildClosetItemStyle(id, 80)}">${item.icon}</span>`;
     }).join('');
 
     if (html) {

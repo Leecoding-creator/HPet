@@ -1126,12 +1126,44 @@ body {
   filter: blur(4px);
 }
 
+/* 캐릭터 이미지 + 장착 아이템 레이어의 공통 부모. bounce-animation을 여기 하나에만 걸어서
+   자식들이 별도 타이밍 동기화 없이 항상 같은 좌표계 안에서 함께 움직이게 한다. */
+.pet-visual-anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
 .main-character-img {
   width: 100%;
   height: auto;
   max-height: 100%;
   object-fit: contain;
   z-index: 1;
+}
+
+/* 옷장 미리보기: 메인 화면과 동일한 .character-wrapper/.pet-visual-anchor 구조를 그대로 재사용하고
+   120px 슬롯에 맞춰 scale()로만 축소한다. scale()은 내부 %기반 위치 계산에 영향을 주지 않으므로
+   옷장에서 보이는 아이템 위치가 메인 화면과 항상 일치한다. */
+.closet-preview-scale {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.closet-preview-scale .character-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 220px;
+  transform: translate(-50%, -50%) scale(0.5454545); /* 120 / 220 */
+  transform-origin: center;
 }
 
 .bounce-animation {
@@ -1144,6 +1176,39 @@ body {
 }
 
 /* 하단 카드 영역 */
+/* 베타테스트 데모: 성장단계 미리보기 토글 (오늘 복용 카드 바로 위) */
+.stage-preview-toggle {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 10px;
+}
+
+.stage-preview-btn {
+  flex: 1;
+  padding: 6px 0;
+  border: 1px solid var(--border-light);
+  background: #fbfbfb;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stage-preview-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.stage-preview-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 2px 8px rgba(107, 171, 123, 0.35);
+}
+
 .home-cards-container {
   position: relative;
   z-index: 10;
