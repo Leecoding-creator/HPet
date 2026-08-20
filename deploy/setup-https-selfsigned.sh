@@ -23,6 +23,9 @@ openssl req -x509 -nodes -days 30 -newkey rsa:2048 \
   -subj "/CN=1.201.117.185"
 
 echo "== 3. nginx 설정 적용 (저장소의 deploy/nginx-hpet.conf 를 심볼릭 링크로 연결) =="
+mkdir -p /var/www/hpet
+cp -r "$REPO_DIR/frontend/." /var/www/hpet/
+chown -R nginx:nginx /var/www/hpet
 ln -sf "$NGINX_CONF_SRC" "$NGINX_CONF_DST"
 
 echo "== 4. 기존 80포트 python http.server 종료 =="
