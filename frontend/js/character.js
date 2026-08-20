@@ -41,6 +41,57 @@ function getCharacterMotionPath(characterCode, growthPoints, action) {
   return `assets/characters_motion/${characterCode}/${stage}/${titleCasedCode}_${action}.gif`;
 }
 
+// 캐릭터 원본 PNG(assets/characters/{code}/{stage}.png)마다 캐릭터 몸통 위 투명 여백 비율이
+// 크게 다르다(canvas로 알파 채널을 스캔해 실측: 상단 여백이 13.6%~36.1%로 약 3배 편차).
+// 지금 레이아웃은 가로폭 고정 + 세로는 원본 비율 그대로라, 세로로 긴 이미지(예: OTTER 4단계,
+// 0.87 비율)는 그 %가 훨씬 큰 절대 픽셀 공백으로 증폭된다(OTTER_1 24px vs OTTER_4 63px).
+// 근본 해결은 PNG 파일 자체를 다시 크롭하는 것이지만, 그 전까지 각 조합의 실측 상단 여백을
+// 기준으로 aspect-ratio + object-fit:cover(하단 기준)로 초과분만 잘라내 캐릭터 몸통이 박스
+// 상단으로부터 항상 비슷한 위치(약 220px 폭 기준 24px 상당)에 오도록 보정한다.
+const CHARACTER_TOP_CROP_PERCENT = {
+  CHICK_1: 7.4, CHICK_2: 7.6, CHICK_3: 5.2, CHICK_4: 3.0,
+  HEDGEHOG_1: 21.5, HEDGEHOG_2: 25.2, HEDGEHOG_3: 20.4, HEDGEHOG_4: 3.9,
+  OTTER_1: 0, OTTER_2: 0, OTTER_3: 10.0, OTTER_4: 15.4,
+  TURTLE_1: 6.3, TURTLE_2: 22.1, TURTLE_3: 8.2, TURTLE_4: 2.9
+};
+
+// img의 src(assets/characters/{CODE}/{N}.png)가 바뀔 때마다 보정 crop을 적용한다. 모션 GIF
+// (assets/characters_motion/...)는 대상이 아니므로 정규식이 매치되지 않아 자동으로 원래
+// object-fit:contain 그대로 둔다.
+function applyCharacterTopCrop(imgEl) {
+  const match = imgEl.src.match(/characters\/([A-Z]+)\/(\d)\.png/);
+  const cropPercent = match ? (CHARACTER_TOP_CROP_PERCENT[`${match[1]}_${match[2]}`] || 0) : 0;
+
+  if (!cropPercent) {
+    imgEl.style.aspectRatio = '';
+    imgEl.style.objectFit = '';
+    imgEl.style.objectPosition = '';
+    return;
+  }
+
+  const apply = () => {
+    const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+    if (!w || !h) return;
+    // 위쪽 cropPercent%를 잘라낸 만큼 더 "넓적한" 목표 비율을 만들고, object-fit:cover +
+    // object-position:bottom으로 그 비율에 맞춰 상단만 잘려나가도록 한다(하단/발밑은 그대로 유지).
+    imgEl.style.aspectRatio = `${w} / ${h * (1 - cropPercent / 100)}`;
+    imgEl.style.objectFit = 'cover';
+    imgEl.style.objectPosition = 'center bottom';
+  };
+  if (imgEl.complete && imgEl.naturalWidth) apply();
+  else imgEl.addEventListener('load', apply, { once: true });
+}
+
+// main-pet-img/closet-preview-char-img는 여러 곳(dashboard.js, character.js 미리보기 등)에서
+// src를 직접 바꾸므로, 매 호출부를 일일이 수정하는 대신 src 변경 자체를 감시해서 한 곳에서
+// 일괄 처리한다.
+function watchCharacterImageForCrop(imgEl) {
+  if (!imgEl) return;
+  new MutationObserver(() => applyCharacterTopCrop(imgEl))
+    .observe(imgEl, { attributes: true, attributeFilter: ['src'] });
+  applyCharacterTopCrop(imgEl);
+}
+
 // 모션 GIF 1회 재생 길이(ms). assets/characters_motion 내 모든 캐릭터/단계 GIF를 실측한 결과
 // 공통적으로 50프레임 x 100ms = 5000ms이므로, "N번 반복"은 이 값의 배수로 근사한다.
 const MOTION_SINGLE_LOOP_MS = 5000;
@@ -82,6 +133,8 @@ class HPetCharacterEngine {
     this.initCloset();
     this.applyEquippedItems();
     this.initStagePreview();
+    watchCharacterImageForCrop(document.getElementById('main-pet-img'));
+    watchCharacterImageForCrop(document.getElementById('closet-preview-char-img'));
 
     // 상태 변경 시 아이템 리렌더링
     window.addEventListener('hpet_state_changed', () => {
