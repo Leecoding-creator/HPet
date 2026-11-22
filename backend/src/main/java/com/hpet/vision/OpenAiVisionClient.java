@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -23,7 +24,9 @@ import java.util.Base64;
  * ⚠️ 실제 호출을 위해서는 환경변수 OPENAI_API_KEY가 설정돼 있어야 한다.
  * 키가 없으면 개발/데모 중 서버가 죽지 않도록 명확한 실패 사유를 반환한다(예외를 던지지 않음).
  */
+// ai.provider=openai 일 때만 활성화 (기본값은 gemini → GeminiVisionClient)
 @Component
+@ConditionalOnProperty(name = "ai.provider", havingValue = "openai")
 public class OpenAiVisionClient implements AiVisionClient {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAiVisionClient.class);

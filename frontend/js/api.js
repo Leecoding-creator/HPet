@@ -3,9 +3,11 @@
  * 백엔드는 { "success": true, "data": {...} } / { "success": false, "error": {...} } 포맷으로 응답한다.
  */
 
+// 로컬 개발: 백엔드(8080) 직접 호출
+// 배포: nginx가 프론트와 /api 를 같은 주소에서 서빙하므로 같은 출처('')로 호출 → 서버 IP가 바뀌어도 수정 불필요
 const HPET_API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:8080'
-  : 'https://1.201.117.185';
+  : '';
 const HPET_TOKEN_KEY = 'HPET_ACCESS_TOKEN';
 const HPET_REFRESH_KEY = 'HPET_REFRESH_TOKEN';
 

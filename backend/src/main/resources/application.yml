@@ -23,12 +23,23 @@ spring:
 
 jwt:
   # 데모용 시크릿입니다. 실제 배포 시 반드시 환경변수로 교체하세요.
-  secret: change-this-secret-key-for-hackathon-demo-only-please-1234567890
+  secret: ${JWT_SECRET:change-this-secret-key-for-hackathon-demo-only-please-1234567890}
   access-token-expiration-ms: 3600000        # 1시간
   refresh-token-expiration-ms: 1209600000    # 14일
 
 # Phase 5 - AI 비전 인증. API 키는 코드에 직접 쓰지 않는다.
-# backend/.env 의 OPENAI_API_KEY 를 spring-dotenv가 프로세스 환경변수처럼 로드해준다.
+# backend/.env 의 키를 spring-dotenv가 프로세스 환경변수처럼 로드해준다.
+# ai.provider: gemini(기본) | openai
+ai:
+  provider: ${AI_PROVIDER:gemini}
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  endpoint-base: https://generativelanguage.googleapis.com/v1beta/models
+  max-image-dimension: 1024
+  image-quality: 0.85
+
 openai:
   api-key: ${OPENAI_API_KEY:}
   model: gpt-5.6-sol
