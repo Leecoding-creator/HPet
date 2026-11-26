@@ -6,8 +6,11 @@
 #     GEMINI_API_KEY=발급받은_키
 #     JWT_SECRET=32자_이상_아무_문자열     (선택, 없으면 데모용 기본값)
 #
-# 실행 (저장소 루트에서):  sudo bash deploy/lightsail-deploy.sh [공인IP 또는 도메인]
-#   - 인자를 생략하면 서버 공인 IP를 자동으로 조회합니다.
+# 실행 (저장소 루트에서):  sudo bash deploy/lightsail-deploy.sh [도메인 또는 공인IP]
+#   예) sudo bash deploy/lightsail-deploy.sh hpet.duckdns.org
+#   - 도메인을 주면 Let's Encrypt 정식 인증서를 발급합니다 (브라우저 경고 없음, 자동 갱신).
+#     DNS가 이 서버 IP를 가리키고 80 포트가 열려 있어야 합니다.
+#   - 인자를 생략하면 서버 공인 IP + 자체서명 인증서로 배포합니다.
 #   - 다시 실행하면 최신 코드로 재빌드·재배포합니다. (H2 메모리 DB라 데이터는 초기화됨)
 #
 # Lightsail 콘솔에서 할 일: Static IP 연결, 네트워킹 탭에서 80·443 포트 열기
@@ -84,19 +87,41 @@ cp -r "$REPO_DIR/frontend/." "$WEB_ROOT/"
 chown -R "$WEB_USER":"$WEB_USER" "$WEB_ROOT"
 echo "  정적 파일 수: 원본 $(find "$REPO_DIR/frontend" -type f | wc -l) / 배포 $(find "$WEB_ROOT" -type f | wc -l)"
 
-echo "== 6. 자체서명 인증서 (없거나 주소가 바뀐 경우에만 생성, 유효 365일) =="
-mkdir -p /etc/nginx/ssl
-if [[ ! -f /etc/nginx/ssl/selfsigned.crt ]] || ! openssl x509 -in /etc/nginx/ssl/selfsigned.crt -noout -subject | grep -q "$SERVER_NAME"; then
+echo "== 6. HTTPS 인증서 =="
+SSL_CERT=/etc/nginx/ssl/selfsigned.crt
+SSL_KEY=/etc/nginx/ssl/selfsigned.key
+mkdir -p /etc/nginx/ssl /var/www/certbot
+# nginx가 먼저 뜰 수 있도록 자체서명 인증서는 항상 준비해 둔다
+if [[ ! -f $SSL_CERT ]] || ! openssl x509 -in $SSL_CERT -noout -subject | grep -q "$SERVER_NAME"; then
   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt \
-    -subj "/CN=$SERVER_NAME" 2>/dev/null
+    -keyout $SSL_KEY -out $SSL_CERT -subj "/CN=$SERVER_NAME" 2>/dev/null
 fi
 
+apply_nginx() {
+  sed -e "s#__SERVER_NAME__#$SERVER_NAME#g" -e "s#__SSL_CERT__#$1#g" -e "s#__SSL_KEY__#$2#g" \
+    "$REPO_DIR/deploy/nginx-hpet.conf" > /etc/nginx/conf.d/hpet.conf
+  nginx -t
+  systemctl enable nginx >/dev/null
+  systemctl restart nginx
+}
+
 echo "== 7. nginx 설정 적용 =="
-sed "s/__SERVER_NAME__/$SERVER_NAME/g" "$REPO_DIR/deploy/nginx-hpet.conf" > /etc/nginx/conf.d/hpet.conf
-nginx -t
-systemctl enable nginx >/dev/null
-systemctl restart nginx
+apply_nginx "$SSL_CERT" "$SSL_KEY"
+
+# 도메인이면(IP가 아니면) Let's Encrypt 발급 시도, 실패하면 자체서명 유지
+if [[ ! "$SERVER_NAME" =~ ^[0-9.]+$ ]]; then
+  echo "== 7-1. Let's Encrypt 인증서 발급 ($SERVER_NAME) =="
+  if [[ $PKG == apt ]]; then apt-get install -y -q certbot; else dnf install -y certbot || true; fi
+  LE_DIR="/etc/letsencrypt/live/$SERVER_NAME"
+  if command -v certbot >/dev/null && certbot certonly --webroot -w /var/www/certbot -d "$SERVER_NAME" \
+       --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring \
+       --deploy-hook "systemctl reload nginx"; then
+    apply_nginx "$LE_DIR/fullchain.pem" "$LE_DIR/privkey.pem"
+    echo "  정식 인증서 적용 완료 (자동 갱신: certbot 타이머)"
+  else
+    echo "  [경고] 발급 실패 → 자체서명 인증서로 계속합니다. DNS·80 포트를 확인하세요."
+  fi
+fi
 
 echo "== 8. 검증 (백엔드 기동 대기 최대 90초) =="
 for i in $(seq 1 30); do
@@ -107,5 +132,6 @@ echo "  백엔드 health: $(curl -s http://localhost:8080/actuator/health || ech
 echo "  프론트 index : HTTP $(curl -sk -o /dev/null -w '%{http_code}' https://localhost/ -H "Host: $SERVER_NAME")"
 echo "  로그인 API   : HTTP $(curl -sk -o /dev/null -w '%{http_code}' -X POST https://localhost/api/auth/login -H "Host: $SERVER_NAME" -H 'Content-Type: application/json' -d '{}') (400/401이면 정상)"
 echo
-echo "완료: https://$SERVER_NAME  (자체서명이라 첫 접속 시 '고급 → 계속' 필요)"
+echo "완료: https://$SERVER_NAME"
+echo "  (IP로 배포했거나 정식 인증서 발급에 실패했다면 첫 접속 시 '고급 → 계속' 필요)"
 echo "로그: sudo journalctl -u hpet -f"
